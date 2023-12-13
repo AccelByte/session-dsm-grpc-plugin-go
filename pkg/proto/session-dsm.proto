@@ -1,0 +1,41 @@
+// Copyright (c) 2023 AccelByte Inc. All Rights Reserved.
+// This is licensed software from AccelByte Inc, for limitations
+// and restrictions contact your company contract manager.
+
+syntax = "proto3";
+
+option csharp_namespace = "AccelByte.Session.sessiondsm";
+option go_package = "accelbyte.net/session/sessiondsm";
+option java_multiple_files = true;
+option java_package = "net.accelbyte.session.sessiondsm";
+
+package accelbyte.session.sessiondsm;
+import "google/protobuf/timestamp.proto";
+
+service SessionDsm{
+  rpc CreateGameSession(RequestCreateGameSession) returns (ResponseCreateGameSession);
+}
+
+message RequestCreateGameSession{
+  string  session_id = 1;
+  string  namespace = 2;
+  string  fleet_alias = 3;
+  string  session_data = 4;
+  string  requested_region = 5;
+  int64   maximum_player = 6;
+}
+
+message ResponseCreateGameSession{
+  string  session_id = 1;
+  string  namespace = 2;
+  string  fleet_alias = 3;
+  string  session_data = 4;
+  string  status = 5;
+  string  ip = 6;
+  int64   port = 7;
+  string  server_id = 8;
+  string  source = 9;
+  string  deployment = 10;
+  string  region = 11;
+  google.protobuf.Timestamp last_updated_at = 12;
+}
