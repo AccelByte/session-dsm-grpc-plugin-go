@@ -16,23 +16,32 @@ type SessionDSM struct {
 func (s *SessionDSM) CreateGameSession(ctx context.Context, req *sessiondsm.RequestCreateGameSession) (*sessiondsm.ResponseCreateGameSession, error) {
 	scope := envelope.NewRootScope(ctx, "CreateGameSession", "")
 	defer scope.Finish()
-	response, err := s.ClientGamelift.CreateGameSession(scope, req.FleetAlias, req.SessionId, req.SessionData, req.RequestedRegion, int(req.MaximumPlayer))
+	var response *awsgamelift.GameSessionResult
+	var err error
+	for _, region := range req.RequestedRegion {
+		response, err = s.ClientGamelift.CreateGameSession(scope, req.Deployment, req.SessionId, req.SessionData, region, int(req.MaximumPlayer))
+		if err != nil {
+			continue
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	responses := &sessiondsm.ResponseCreateGameSession{
-		SessionId:   req.SessionId,
-		Namespace:   req.Namespace,
-		FleetAlias:  req.FleetAlias,
-		SessionData: req.SessionData,
-		Status:      constants.ServerStatusReady,
-		Ip:          response.IPAddress,
-		Port:        int64(response.Port),
-		ServerId:    response.GameSessionARN,
-		Source:      constants.GameServerSourceGamelift,
-		Deployment:  response.FleetID,
-		Region:      response.Location,
+		SessionId:     req.SessionId,
+		Namespace:     req.Namespace,
+		Deployment:    response.FleetID,
+		SessionData:   req.SessionData,
+		Status:        constants.ServerStatusReady,
+		Ip:            response.IPAddress,
+		Port:          int64(response.Port),
+		ServerId:      response.GameSessionARN,
+		Source:        constants.GameServerSourceGamelift,
+		Region:        response.Location,
+		ClientVersion: req.ClientVersion,
+		GameMode:      req.GameMode,
 	}
 	return responses, err
 }

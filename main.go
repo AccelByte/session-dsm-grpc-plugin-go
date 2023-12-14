@@ -70,7 +70,7 @@ func main() {
 		return
 	}
 
-	clientGamelift := awsgamelift.New(nil, "us-west-1")
+	clientGamelift := awsgamelift.New(nil, cfg.GameliftRegion)
 	grpcServer := grpc.NewServer()
 	dsmService := &server.SessionDSM{
 		UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
