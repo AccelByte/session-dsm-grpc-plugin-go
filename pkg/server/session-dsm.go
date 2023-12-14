@@ -23,6 +23,7 @@ func (s *SessionDSM) CreateGameSession(ctx context.Context, req *sessiondsm.Requ
 		if err != nil {
 			continue
 		}
+		break
 	}
 
 	if err != nil {
