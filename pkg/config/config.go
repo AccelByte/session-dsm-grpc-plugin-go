@@ -13,8 +13,14 @@ import (
 //
 //nolint:lll
 type Config struct {
-	GRPCPort       int    `env:"GRPC_PORT" envDocs:"The Port gRPC listens to" envDefault:"9090"`
-	GameliftRegion string `env:"GAMELIFT_REGION" envDocs:"Region where the gamelift is" envDefault:""`
+	GRPCPort                    int    `env:"GRPC_PORT" envDocs:"The Port gRPC listens to" envDefault:"6565"`
+	GameliftRegion              string `env:"GAMELIFT_REGION" envDocs:"Region where the gamelift is" envDefault:""`
+	ABBaseURL                   string `env:"AB_BASE_URL" envDocs:"Base URL of AccelByte Gaming Services" envDefault:""`
+	ABClientId                  string `env:"AB_CLIENT_ID" envDocs:"Client ID from the Prerequisites section" envDefault:""`
+	ABClientSecret              string `env:"AB_CLIENT_SECRET" envDocs:"Client Secret from the Prerequisites section" envDefault:""`
+	PluginGRPCServerAuthEnabled bool   `env:"PLUGIN_GRPC_SERVER_AUTH_ENABLED" envDocs:"Enable or disable access token and permission verification" envDefault:""`
+	AWSAccessKeyId              string `env:"AWS_ACCESS_KEY_ID" envDocs:"AWS Access Key if using gamelift" envDefault:""`
+	AWSSecretKeyId              string `env:"AWS_SECRET_ACCESS_KEY" envDocs:"AWS Secret Key if using gamelift" envDefault:""`
 }
 
 // HelpDocs returns documentation of Config based on field tags.
