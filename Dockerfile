@@ -25,4 +25,6 @@ WORKDIR /app
 COPY --from=builder /build/session-dsm-grpc-plugin-go_$TARGETOS-$TARGETARCH session-dsm-grpc-plugin-go
 # Plugin arch gRPC server port
 EXPOSE 6565
+# expose port 8080 later this for metric
+EXPOSE 8080
 CMD [ "/app/session-dsm-grpc-plugin-go" ]

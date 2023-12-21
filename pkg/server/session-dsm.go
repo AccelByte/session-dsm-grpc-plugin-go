@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"session-dsm-grpc-plugin/pkg/awsgamelift"
 	"session-dsm-grpc-plugin/pkg/constants"
 	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
@@ -18,6 +19,11 @@ func (s *SessionDSM) CreateGameSession(ctx context.Context, req *sessiondsm.Requ
 	defer scope.Finish()
 	var response *awsgamelift.GameSessionResult
 	var err error
+
+	if len(req.RequestedRegion) == 0 {
+		return nil, errors.New("need provide requested region")
+	}
+
 	for _, region := range req.RequestedRegion {
 		response, err = s.ClientGamelift.CreateGameSession(scope, req.Deployment, req.SessionId, req.SessionData, region, int(req.MaximumPlayer))
 		if err != nil {

@@ -7,6 +7,7 @@ import (
 	"github.com/caarlos0/env"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"net"
 	"os"
 	"os/signal"
@@ -45,7 +46,7 @@ func main() {
 	logrus.SetOutput(os.Stdout)
 	logrus.SetLevel(logrus.InfoLevel)
 
-	logrus.Info("Justice Session Service")
+	logrus.Info("Session Dsms Grpc Plugin")
 	logrus.Infof("RevisionID: %s, Build Date: %s, Git Hash: %s Roles Seeding Version: %s\n", revisionID, buildDate, gitHash, rolesSeedingVersion)
 
 	cfg := &config.Config{}
@@ -78,6 +79,9 @@ func main() {
 	}
 
 	sessiondsm.RegisterSessionDsmServer(grpcServer, dsmService)
+	// Enable gRPC Reflection
+	reflection.Register(grpcServer)
+	logrus.Infof("gRPC reflection enabled")
 
 	gRPCListener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", cfg.GRPCPort))
 	if err != nil {

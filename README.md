@@ -149,7 +149,7 @@ The custom functions in this sample app can be tested locally using `postman`.
     "namespace": "testing",
     "requested_region": [
         "us-west-1",
-        "us-west-2",
+        "us-west-2"
     ],
     "session_data": "testing",
     "session_id": "uuidv4"
@@ -180,3 +180,18 @@ in local development environment to the internet so that it can be called by
    ```
 
 5. [Create an OAuth Client](https://docs.accelbyte.io/guides/access/iam-client.html) with `confidential` client type with the following permissions. Keep the `Client ID` and `Client Secret`.
+6. [Create Session Template] (https://docs.accelbyte.io/gaming-services/services/play/session/config-session-template-portal/) create session template with required field
+   ```json
+    {
+      "name":"testinggamelift",
+      "gameliftFleetAlias": "your alias",
+      "customURLGRPC": "ip or domain your gprc server",
+      "dsSource" : "custom",
+      "type": "DS",
+      "requestedRegions": [
+        "requested region"
+      ]
+    }
+   ```
+7. [Create Game Session] Create Game Session with template create before
+8. [Check Result] Check Result in aws gamelift
