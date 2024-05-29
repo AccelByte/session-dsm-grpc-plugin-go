@@ -132,14 +132,14 @@ func (g *GCPVM) CreateGameSession(rootScope *envelope.Scope, fleetAlias, session
 				Subnetwork: "projects/" + g.config.GCPProjectID + "/regions/" + locationGCP + "/subnetworks/" + g.config.GCPNetwork,
 			},
 		},
-		ServiceAccounts: []*compute.ServiceAccount{
-			{
-				Email: "bobbyresearchgcp@accelbyte-152423.iam.gserviceaccount.com",
-				Scopes: []string{
-					"https://www.googleapis.com/auth/cloud-platform",
-				},
-			},
-		},
+		// ServiceAccounts: []*compute.ServiceAccount{ if using service account can adding in here
+		// 	{
+		// 		Email: "",
+		// 		Scopes: []string{
+		// 			"https://www.googleapis.com/auth/cloud-platform",
+		// 		},
+		// 	},
+		// },
 		ShieldedInstanceConfig: &compute.ShieldedInstanceConfig{
 			EnableIntegrityMonitoring: true,
 			EnableSecureBoot:          false,
@@ -224,7 +224,7 @@ func (g *GCPVM) CreateGameSession(rootScope *envelope.Scope, fleetAlias, session
 		SessionData:   sessionData,
 		Status:        constants.ServerStatusReady,
 		Ip:            externalIP,
-		Port:          8080,
+		Port:          8080, //can change this port with your docker port open container
 		ServerId:      instanceName,
 		Source:        constants.GameServerSourceGCP,
 		Deployment:    deployment,
