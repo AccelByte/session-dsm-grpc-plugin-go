@@ -6,11 +6,12 @@ package awsgamelift
 
 import (
 	"errors"
+	"session-dsm-grpc-plugin/pkg/utils/envelope"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/gamelift"
-	"session-dsm-grpc-plugin/pkg/utils/envelope"
 )
 
 const (
@@ -18,10 +19,6 @@ const (
 	TypeGameliftGamesessionCreated       = "gamelift_gamesession_created"
 	TypeCustomeCreateGameliftGamesession = "gamelift_custome_create_gamesession"
 )
-
-type Client interface {
-	CreateGameSession(scope *envelope.Scope, fleetAlias, sessionID, sessionData, location string, maxPlayer int) (*GameSessionResult, error)
-}
 
 type AwsGamelift struct {
 	credential *credentials.Credentials

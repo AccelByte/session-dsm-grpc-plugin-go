@@ -13,14 +13,24 @@ import (
 //
 //nolint:lll
 type Config struct {
+	// awsgamelift Config
 	GRPCPort                    int    `env:"GRPC_PORT" envDocs:"The Port gRPC listens to" envDefault:"6565"`
 	GameliftRegion              string `env:"GAMELIFT_REGION" envDocs:"Region where the gamelift is" envDefault:""`
-	ABBaseURL                   string `env:"AB_BASE_URL" envDocs:"Base URL of AccelByte Gaming Services" envDefault:""`
-	ABClientId                  string `env:"AB_CLIENT_ID" envDocs:"Client ID from the Prerequisites section" envDefault:""`
-	ABClientSecret              string `env:"AB_CLIENT_SECRET" envDocs:"Client Secret from the Prerequisites section" envDefault:""`
 	PluginGRPCServerAuthEnabled bool   `env:"PLUGIN_GRPC_SERVER_AUTH_ENABLED" envDocs:"Enable or disable access token and permission verification" envDefault:""`
 	AWSAccessKeyId              string `env:"AWS_ACCESS_KEY_ID" envDocs:"AWS Access Key if using gamelift" envDefault:""`
 	AWSSecretKeyId              string `env:"AWS_SECRET_ACCESS_KEY" envDocs:"AWS Secret Key if using gamelift" envDefault:""`
+	// GCP Config
+	GCPProjectID   string `env:"GCP_PROJECT_ID" envDocs:"Project ID in GCP VM" envDefault:""`
+	GCPRegion      string `env:"GCP_REGION" envDocs:"GCP Region" envDefault:""`
+	GCPNetwork     string `env:"GCP_NETWORK" envDocs:"GCP Network for allow trafic and port" envDefault:""`
+	GCPMachineType string `env:"GCP_MACHINE_TYPE" envDocs:"GCP Machine Type example e2-micro" envDefault:""`
+	GCPRepository  string `env:"GCP_REPOSITORY" envDocs:"GCP Repository URL" envDefault:""`
+	GCPRetry       int    `env:"GCP_RETRY" envDocs:"GCP Retry for get instance" envDefault:"3"`
+	GCPWaitGetIP   int    `env:"GCP_WAIT_GET_IP" envDocs:"GCP Wait Get IP in seconds" envDefault:"1"`
+	// AB Config
+	ABBaseURL      string `env:"AB_BASE_URL" envDocs:"Base URL of AccelByte Gaming Services" envDefault:""`
+	ABClientId     string `env:"AB_CLIENT_ID" envDocs:"Client ID from the Prerequisites section" envDefault:""`
+	ABClientSecret string `env:"AB_CLIENT_SECRET" envDocs:"Client Secret from the Prerequisites section" envDefault:""`
 }
 
 // HelpDocs returns documentation of Config based on field tags.

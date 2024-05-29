@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"errors"
-	"session-dsm-grpc-plugin/pkg/awsgamelift"
+	"session-dsm-grpc-plugin/pkg/client/awsgamelift"
 	"session-dsm-grpc-plugin/pkg/constants"
 	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
 	"session-dsm-grpc-plugin/pkg/utils/envelope"
@@ -49,6 +49,18 @@ func (s *SessionDSM) CreateGameSession(ctx context.Context, req *sessiondsm.Requ
 		Region:        response.Location,
 		ClientVersion: req.ClientVersion,
 		GameMode:      req.GameMode,
+	}
+	return responses, err
+}
+
+func (s *SessionDSM) TerminateGameSession(ctx context.Context, req *sessiondsm.RequestTerminateGameSession) (*sessiondsm.ResponseTerminateGameSession, error) {
+	scope := envelope.NewRootScope(ctx, "TerminateGameSession", "")
+	defer scope.Finish()
+	var err error
+
+	responses := &sessiondsm.ResponseTerminateGameSession{
+		SessionId: req.SessionId,
+		Namespace: req.Namespace,
 	}
 	return responses, err
 }
