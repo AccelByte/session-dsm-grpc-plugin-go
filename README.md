@@ -96,6 +96,14 @@ To be able to run this sample app, you will need to follow these setup steps.
    AWS_ACCESS_KEY_ID='xxxxxxx' # aws access key if using gamelift
    AWS_SECRET_ACCESS_KEY='xxxxxx' #aws secret key if using gamelift
    GAMELIFT_REGION='us-west-2' #aws secret key if using gamelift region
+   // GCP Config
+	GCPProjectID='Project ID in GCP VM'
+	GCPRegion='GCP Region'
+	GCPNetwork='GCP Network for allow trafic and port'
+	GCPMachineType='GCP Machine Type example e2-micro'
+	GCPRepository='GCP Repository URL'
+	GCPRetry='GCP Retry for get instance'
+   GCP_WAIT_GET_IP='GCP Wait Get IP'
    ```
 
    > :warning: **Keep PLUGIN_GRPC_SERVER_AUTH_ENABLED=false for now**: It is currently not
@@ -116,7 +124,8 @@ make build
 To (build and) run this sample app in a container, use the following command.
 
 ```
-docker-compose up --build
+docker-compose -f docker-compose-gamelift.yaml up // this is for gamelift server
+docker-compose -f docker-compose-gcpvm.yaml up // this is for gcp server
 ```
 
 ## Testing

@@ -13,6 +13,20 @@ package accelbyte.session.sessiondsm;
 
 service SessionDsm{
   rpc CreateGameSession(RequestCreateGameSession) returns (ResponseCreateGameSession);
+  rpc TerminateGameSession(RequestTerminateGameSession) returns (ResponseTerminateGameSession);
+}
+
+message RequestTerminateGameSession{
+  string  session_id = 1;
+  string  namespace = 2;
+  string  zone = 3;
+}
+
+message ResponseTerminateGameSession{
+  string  session_id = 1;
+  string  namespace = 2;
+  bool success = 3;
+  string reason = 4;
 }
 
 message RequestCreateGameSession{
@@ -39,4 +53,5 @@ message ResponseCreateGameSession{
   string  region = 10;
   string  client_version = 11;
   string  game_mode = 12;
+  string  created_region =13;
 }

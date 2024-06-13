@@ -19,4 +19,5 @@ var (
 	ServerStatusUnreachable  = "UNREACHABLE"
 	ServerStatusFailed       = "FAILED"
 	GameServerSourceGamelift = "Gamelift"
+	GameServerSourceGCP      = "GCP"
 )

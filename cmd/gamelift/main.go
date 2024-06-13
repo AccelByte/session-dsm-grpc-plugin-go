@@ -4,19 +4,20 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net"
+	"os"
+	"os/signal"
+	"session-dsm-grpc-plugin/pkg/client/awsgamelift"
+	"session-dsm-grpc-plugin/pkg/config"
+	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
+	server "session-dsm-grpc-plugin/pkg/server/gamelift"
+	"session-dsm-grpc-plugin/pkg/utils"
+	"session-dsm-grpc-plugin/pkg/utils/envelope"
+
 	"github.com/caarlos0/env"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"net"
-	"os"
-	"os/signal"
-	"session-dsm-grpc-plugin/pkg/awsgamelift"
-	"session-dsm-grpc-plugin/pkg/config"
-	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
-	"session-dsm-grpc-plugin/pkg/server"
-	"session-dsm-grpc-plugin/pkg/utils"
-	"session-dsm-grpc-plugin/pkg/utils/envelope"
 )
 
 var (
@@ -46,7 +47,7 @@ func main() {
 	logrus.SetOutput(os.Stdout)
 	logrus.SetLevel(logrus.InfoLevel)
 
-	logrus.Info("Session Dsms Grpc Plugin")
+	logrus.Info("Session Dsms Grpc Plugin Gamelift")
 	logrus.Infof("RevisionID: %s, Build Date: %s, Git Hash: %s Roles Seeding Version: %s\n", revisionID, buildDate, gitHash, rolesSeedingVersion)
 
 	cfg := &config.Config{}
