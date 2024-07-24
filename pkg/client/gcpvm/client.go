@@ -14,6 +14,7 @@ import (
 	"session-dsm-grpc-plugin/pkg/constants"
 	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
 	"session-dsm-grpc-plugin/pkg/utils/envelope"
+	"strings"
 	"time"
 
 	"google.golang.org/api/compute/v1"
@@ -236,8 +237,18 @@ func (g *GCPVM) CreateGameSession(rootScope *envelope.Scope, fleetAlias, session
 }
 
 func (g *GCPVM) TerminateGameSession(rootScope *envelope.Scope, sessionID, namespace, zone string) (*sessiondsm.ResponseTerminateGameSession, error) {
-	res, err := g.credential.Instances.Delete(g.config.GCPProjectID, zone, getInstanceName(sessionID, namespace)).Context(rootScope.Ctx).Do()
+	scope := rootScope.NewChildScope("gcpvm.TerminateGameSession")
+	defer scope.Finish()
+	res, err := g.credential.Instances.Delete(g.config.GCPProjectID, zone, getInstanceName(sessionID, namespace)).Context(scope.Ctx).Do()
 	if err != nil {
+		if strings.Contains(err.Error(), "Error 404") {
+			return &sessiondsm.ResponseTerminateGameSession{
+				SessionId: sessionID,
+				Namespace: namespace,
+				Success:   true,
+				Reason:    "",
+			}, nil
+		}
 		return nil, err
 	}
 
