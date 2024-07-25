@@ -64,12 +64,12 @@ in [grpc-plugin-dependencies](https://github.com/AccelByte/grpc-plugin-dependenc
 2. A local copy of [grpc-plugin-dependencies](https://github.com/AccelByte/grpc-plugin-dependencies) repository.
 
    ```
-   git clone git@bitbucket.org:accelbyte/session-dsm-gprc-plugin.git
+   git clone git@github.com/AccelByte/session-dsm-grpc-plugin-go.git
    ```
 
-3. Access to `AccelByte Gaming Services` demo environment.
+3. Access to `AccelByte Gaming Services` environment.
 
-   a. Base URL: https://demo.accelbyte.io
+   a. Base URL: https://prod.gamingservices.accelbyte.io
 
    b. [Create a Game Namespace](https://docs.accelbyte.io/esg/uam/namespaces.html#tutorials) if you don't have one yet. Keep the `Namespace ID`.
 
