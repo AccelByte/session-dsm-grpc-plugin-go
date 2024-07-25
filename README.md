@@ -164,5 +164,3 @@ The custom functions in this sample app can be tested locally using `postman`.
     "session_id": "uuidv4"
    }
    ```
-
-[//]: # todo add ### Integration Test with AccelByte Gaming Services
