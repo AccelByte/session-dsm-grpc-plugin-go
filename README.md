@@ -89,7 +89,7 @@ To be able to run this sample app, you will need to follow these setup steps.
 2. Fill in the required environment variables in `.env` file as shown below.
 
    ```
-   AB_BASE_URL=https://demo.accelbyte.io      # Base URL of AccelByte Gaming Services demo environment
+   AB_BASE_URL=https://prod.gamingservices.accelbyte.io      # Base URL of AccelByte Gaming Services prod environment
    AB_CLIENT_ID='xxxxxxxxxx'         # Client ID from the Prerequisites section
    AB_CLIENT_SECRET='xxxxxxxxxx'     # Client Secret from the Prerequisites section
    PLUGIN_GRPC_SERVER_AUTH_ENABLED=false      # Enable or disable access token and permission verification
@@ -110,6 +110,9 @@ To be able to run this sample app, you will need to follow these setup steps.
    supported by `AccelByte Gaming Services`, but it will be enabled later on to improve security. If it is
    enabled, the gRPC server will reject any calls from gRPC clients without proper authorization
    metadata.
+
+3. Access to AccelByte Gaming Services environment.
+a. Base URL: https://prod.gamingservices.accelbyte.io/admin
 
 ## Building
 
@@ -164,5 +167,3 @@ The custom functions in this sample app can be tested locally using `postman`.
     "session_id": "uuidv4"
    }
    ```
-
-[//]: # todo add ### Integration Test with AccelByte Gaming Services
