@@ -64,7 +64,7 @@ in [grpc-plugin-dependencies](https://github.com/AccelByte/grpc-plugin-dependenc
 2. A local copy of [grpc-plugin-dependencies](https://github.com/AccelByte/grpc-plugin-dependencies) repository.
 
    ```
-   git clone git@github.com/AccelByte/session-dsm-grpc-plugin-go.git
+   git clone https://github.com/AccelByte/session-dsm-grpc-plugin-go.git
    ```
 
 3. Access to `AccelByte Gaming Services` environment.
@@ -90,20 +90,22 @@ To be able to run this sample app, you will need to follow these setup steps.
 
    ```
    AB_BASE_URL=https://prod.gamingservices.accelbyte.io      # Base URL of AccelByte Gaming Services prod environment
-   AB_CLIENT_ID='xxxxxxxxxx'         # Client ID from the Prerequisites section
-   AB_CLIENT_SECRET='xxxxxxxxxx'     # Client Secret from the Prerequisites section
-   PLUGIN_GRPC_SERVER_AUTH_ENABLED=false      # Enable or disable access token and permission verification
-   AWS_ACCESS_KEY_ID='xxxxxxx' # aws access key if using gamelift
-   AWS_SECRET_ACCESS_KEY='xxxxxx' #aws secret key if using gamelift
-   GAMELIFT_REGION='us-west-2' #aws secret key if using gamelift region
+   AB_CLIENT_ID='xxxxxxxxxx'                                   # Client ID from the Prerequisites section
+   AB_CLIENT_SECRET='xxxxxxxxxx'                               # Client Secret from the Prerequisites section
+   PLUGIN_GRPC_SERVER_AUTH_ENABLED=false                       # Enable or disable access token and permission verification
+   
+   // AWS Gamelift Config
+   AWS_ACCESS_KEY_ID='xxxxxxx'                                 # aws access key if using gamelift
+   AWS_SECRET_ACCESS_KEY='xxxxxx'                              # aws secret key if using gamelift
+   GAMELIFT_REGION='us-west-2'                                 # aws secret key if using gamelift region
+   
    // GCP Config
-	GCPProjectID='Project ID in GCP VM'
-	GCPRegion='GCP Region'
-	GCPNetwork='GCP Network for allow trafic and port'
-	GCPMachineType='GCP Machine Type example e2-micro'
-	GCPRepository='GCP Repository URL'
-	GCPRetry='GCP Retry for get instance'
-   GCP_WAIT_GET_IP='GCP Wait Get IP'
+	GCP_PROJECT_ID=xxxxx-xxxx                                   # GCP Project ID
+   GCP_NETWORK=public                                          # GCP Network type
+   GCP_MACHINE_TYPE=e2-micro                                   # GCP intance type
+   GCP_REPOSITORY=asia-southeast1-docker.pkg.dev/xxxx/gcpvm    # GCP Repository
+   GCP_RETRY=3                                                 # GCP Retry to get instance
+   GCP_WAIT_GET_IP=1                                           # GCP wait time to get the instance IP in seconds
    ```
 
    > :warning: **Keep PLUGIN_GRPC_SERVER_AUTH_ENABLED=false for now**: It is currently not
