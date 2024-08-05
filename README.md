@@ -2,89 +2,141 @@
 
 ```mermaid
 flowchart LR
-   subgraph AB Cloud Service
+   subgraph AccelByte Gaming Services
    CL[gRPC Client]
    end
-   subgraph gRPC Server Deployment
-   SV["gRPC Server\n(YOU ARE HERE)"]
-   DS[Dependency Services]
-   CL --- DS
+   subgraph Extend Override App
+   SV["gRPC Server\n(you are here)"]
    end
-   DS --- SV
+   CL --- SV
 ```
 
-`AccelByte Gaming Services` capabilities can be extended using custom functions implemented in a `gRPC server`.
-If configured, custom functions in the `gRPC server` will be called by `AccelByte Gaming Services` instead of the default function.
-
-The `gRPC server` and the `gRPC client` can actually communicate directly. 
-However, additional services are necessary to provide **security**, **reliability**, **scalability**, and **observability**. 
-We call these services as `dependency services`. 
-The [grpc-plugin-dependencies](https://github.com/AccelByte/grpc-plugin-dependencies) repository is provided 
-as an example of what these `dependency services` may look like. 
-It contains a docker compose which consists of these `dependency services`.
-
-> :warning: **grpc-plugin-dependencies is provided as example for local development purpose only:** The dependency services in the actual gRPC server deployment may not be exactly the same.
+`AccelByte Gaming Services` (AGS) features can be customized with 
+`Extend Override` apps. An `Extend Override` app is a `gRPC server` which 
+contains one or more custom functions which can be called by AGS 
+instead of the default functions.
 
 ## Overview
 
-This repository contains `sample matchmaking function gRPC server app` written in `Go`, It provides simple custom
-matchmaking function implementation for matchmaking service in `AccelByte Gaming Services`. 
-It will simply match 2 players coming into the function.
+This repository serves as a template project for an `Extend Override` 
+app for `session dsm grpc plugin server` written in `Go`. You can clone this repository
+and start implementing custom functions which can then be called by AGS.
 
-This sample app also shows how this `gRPC server` can be instrumented for better observability.
-It is configured by default to send metrics, traces, and logs to the observability `dependency services` 
-in [grpc-plugin-dependencies](https://github.com/AccelByte/grpc-plugin-dependencies).
+By using this repository as a template project, you will get the recommended 
+authentication and authorization implemented out-of-the-box. You will also get 
+some instrumentation for observability so that metrics, traces, and 
+logs will be available when the app is deployed.
+
+As an example to get you started, this template project contains sample 
+custom functions for session dsm grpc plugin payloads.
 
 ## Prerequisites
 
-1. Windows 10 WSL2 or Linux Ubuntu 20.04 with the following tools installed.
+1. Windows 11 WSL2 or Linux Ubuntu 22.04 or macOS 14+ with the following tools installed.
 
-   a. bash
+   a. Bash
 
-   b. make
-
-   c. docker v23.x
-
-   d. docker-compose v2.x
-
-   e. docker loki driver
-    
       ```
-      docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
+      bash --version
+
+      GNU bash, version 5.1.16(1)-release (x86_64-pc-linux-gnu)
+      ...
       ```
 
-   f. go 1.18
+   b. Make
 
-   g. git
+      - To install from Ubuntu repository, run: `sudo apt update && sudo apt install make` 
+
+      ```
+      make --version
+
+      GNU Make 4.3
+      ...
+      ```
+
+   c. Docker (Docker Engine v23.0+)
+
+      - To install from Ubuntu repository, run: `sudo apt update && sudo apt install docker.io docker-buildx docker-compose-v2`
+      - Add your user to `docker` group: `sudo usermod -aG docker $USER`
+      - Log out and log back in so that the changes take effect
+
+      ```
+      docker version
+
+      ...
+      Server: Docker Desktop
+       Engine:
+        Version:          24.0.5
+      ...
+      ```
+
+   d. Go v1.19
+
+      - Follow [Go installation](https://go.dev/doc/install) instruction to install Go
+
+      ```
+      go version
+
+      go version go1.19.0 linux/amd64
+      ```
+
+   e. Curl
+
+      - To install from Ubuntu repository, run: `sudo apt update && sudo apt install curl`
+
+      ```
+      curl --version
+
+      curl 7.81.0 (x86_64-pc-linux-gnu)
+      ...
+      ```
+
+   f. Jq
+
+      - To install from Ubuntu repository, run: `sudo apt update && sudo apt install jq`
+
+      ```
+      jq --version
+
+      jq-1.6
+      ...
+      ```
+
+   g. [Postman](https://www.postman.com/)
+
+      - Use binary available [here](https://www.postman.com/downloads/)
 
    h. [ngrok](https://ngrok.com/)
 
-   i. [postman](https://www.postman.com/)
+      - Follow installation instruction for Linux [here](https://ngrok.com/download)
 
-2. A local copy of [grpc-plugin-dependencies](https://github.com/AccelByte/grpc-plugin-dependencies) repository.
+   > :exclamation: In macOS, you may use [Homebrew](https://brew.sh/) to easily install some of the tools above.
 
    ```
    git clone https://github.com/AccelByte/session-dsm-grpc-plugin-go.git
    ```
 
-3. Access to `AccelByte Gaming Services` environment.
+   a. Base URL
+   
+      - For `Starter` tier e.g.  https://prod.gamingservices.accelbyte.io
+      
+   b. [Create a Game Namespace](https://docs.accelbyte.io/gaming-services/tutorials/how-to/create-a-game-namespace/) if you don't have one yet. Keep the `Namespace ID`.
 
-   a. Base URL: https://prod.gamingservices.accelbyte.io
-
-   b. [Create a Game Namespace](https://docs.accelbyte.io/esg/uam/namespaces.html#tutorials) if you don't have one yet. Keep the `Namespace ID`.
-
-   c. [Create an OAuth Client](https://docs.accelbyte.io/guides/access/iam-client.html) with confidential client type with the following permission. Keep the `Client ID` and `Client Secret`.
-
-      - NAMESPACE:{namespace}:MMV2GRPCSERVICE [READ]
+   c. [Create an OAuth Client](https://docs.accelbyte.io/gaming-services/services/access/authorization/manage-access-control-for-applications/#create-an-iam-client) with confidential client type. Keep the `Client ID` and `Client Secret`.
 
 ## Setup
 
-To be able to run this sample app, you will need to follow these setup steps.
+To be able to run the sample custom functions, you will need to follow these 
+setup steps.
 
-1. Create a docker compose `.env` file by copying the content of [.env.template](.env.template) file.
+1. Create a docker compose `.env` file by copying the content of 
+   [.env.template](.env.template) file.
 
-   > :warning: **The host OS environment variables have higher precedence compared to `.env` file variables**: If the variables in `.env` file do not seem to take effect properly, check if there are host OS environment variables with the same name. 
-   See documentation about [docker compose environment variables precedence](https://docs.docker.com/compose/environment-variables/envvars-precedence/) for more details.
+   > :warning: **The host OS environment variables have higher precedence compared to `.env` file variables**: If the variables in `.env` file do not seem to take 
+   effect properly, check if there are host OS environment variables with the 
+   same name. See documentation about 
+   [docker compose environment variables precedence](https://docs.docker.com/compose/environment-variables/envvars-precedence/) 
+   for more details.
 
 2. Fill in the required environment variables in `.env` file as shown below.
 
@@ -108,20 +160,18 @@ To be able to run this sample app, you will need to follow these setup steps.
    GCP_WAIT_GET_IP=1                                           # GCP wait time to get the instance IP in seconds
    ```
 
-   > :warning: **Keep PLUGIN_GRPC_SERVER_AUTH_ENABLED=false for now**: It is currently not
-   supported by `AccelByte Gaming Services`, but it will be enabled later on to improve security. If it is
-   enabled, the gRPC server will reject any calls from gRPC clients without proper authorization
-   metadata.
-
 3. Access to AccelByte Gaming Services environment.
 a. Base URL: https://prod.gamingservices.accelbyte.io/admin
 
 ## Building
 
 To build this sample app, use the following command.
+the image only can run 1 server gcpvm or gamelift
 
 ```
 make build
+docker build -f Dockerfilegamelift . // this is use for gamelift
+docker build -f Dockerfilegamelift . // this is use for gcpvm
 ```
 
 ## Running
@@ -129,30 +179,27 @@ make build
 To (build and) run this sample app in a container, use the following command.
 
 ```
-docker-compose -f docker-compose-gamelift.yaml up // this is for gamelift server
-docker-compose -f docker-compose-gcpvm.yaml up // this is for gcp server
+docker-compose -f docker-compose-gamelift.yaml up --build // this is for gamelift server
+docker-compose -f docker-compose-gcpvm.yaml up --build // this is for gcp server
 ```
 
 ## Testing
 
-### Functional Test in Local Development Environment
+### Test in Local Development Environment
 
-The custom functions in this sample app can be tested locally using `postman`.
+The custom functions in this sample app can be tested locally using [postman](https://www.postman.com/).
 
-1. Run the `dependency services` by following the `README.md` in the [grpc-plugin-dependencies](https://github.com/AccelByte/grpc-plugin-dependencies) repository.
-   > :warning: **Make sure to start dependency services with mTLS disabled for now**: It is currently not supported by `AccelByte Gaming Services`, but it will be enabled later on to improve security. If it is enabled, the gRPC client calls without mTLS will be rejected.
+1. Run this `gRPC server` sample app by using the command below.
 
-2. Run this `gRPC server` sample app by using command below.
    ```shell
-   docker-compose up --build
+   docker-compose -f docker-compose-gamelift.yaml up --build // this is for gamelift server
+   docker-compose -f docker-compose-gcpvm.yaml up --build // this is for gcp server
    ```
 
-3. Open `postman`, create a new `gRPC request` (tutorial [here](https://blog.postman.com/postman-now-supports-grpc/)), and enter `localhost:10000` as server URL. 
+2. Open `postman`, create a new `gRPC request`, and enter `localhost:6565` as server URL (tutorial [here](https://blog.postman.com/postman-now-supports-grpc/)). 
 
-   > :exclamation: We are essentially accessing the `gRPC server` through an `Envoy` proxy in `dependency services`.
-
-4. In `postman`, continue by selecting `CreateGameSession` grpc call method and click `Invoke` button, this will start stream connection to grpc server sample app.
-5. In `postman`, continue sending parameters first to specify number of players in a match by copying sample `json` below and click `Send`.
+3. In `postman`, continue by selecting `CreateGameSession` grpc call method and click `Invoke` button, this will start stream connection to grpc server sample app.
+4. In `postman`, continue sending parameters first to specify number of players in a match by copying sample `json` below and click `Send`.
 
    ```json
    {
@@ -169,3 +216,81 @@ The custom functions in this sample app can be tested locally using `postman`.
     "session_id": "uuidv4"
    }
    ```
+
+### Test with AccelByte Gaming Services
+
+For testing this sample app which is running locally with AGS,
+the `gRPC server` needs to be exposed to the internet. To do this without requiring 
+public IP, we can use something like [ngrok](https://ngrok.com/).
+
+1. Run this `gRPC server` sample app by using command below.
+
+   ```shell
+   docker-compose -f docker-compose-gamelift.yaml up --build // this is for gamelift server
+   docker-compose -f docker-compose-gcpvm.yaml up --build // this is for gcp server
+   ```
+
+2. Sign-in/sign-up to [ngrok](https://ngrok.com/) and get your auth token in `ngrok` dashboard.
+
+3. In this sample app root directory, run the following helper command to expose `gRPC server` port in local development environment to the internet. Take a note of the `ngrok` forwarding URL e.g. `http://0.tcp.ap.ngrok.io:xxxxx`.
+
+   ```
+   make ngrok NGROK_AUTHTOKEN=xxxxxxxxxxx
+   ```
+
+> :warning: **Ngrok free plan has some limitations**: You may want to use paid plan if the traffic is high.
+
+### Test Observability
+
+To be able to see the how the observability works in this sample app locally, there are few things that need be setup before performing tests.
+
+1. Clone and run [session-dsm-grpc-plugin-go](github.com/AccelByte/session-dsm-grpc-plugin-go) sample app. 
+
+   ```
+   git clone https://github.com/AccelByte/session-dsm-grpc-plugin-go.git
+   cd grpc-plugin-dependencies
+   docker-compose up
+   ```
+
+   > :exclamation: More information about [session-dsm-grpc-plugin-go](https://github.com/AccelByte/session-dsm-grpc-plugin-go) 
+
+3. Perform testing. For example, by following [Test in Local Development Environment](#test-in-local-development-environment) or [Test with AccelByte Gaming Services](#test-with-accelbyte-gaming-services).
+
+## Deploying
+
+After done testing, you may want to deploy this app to `AccelByte Gaming Services`.
+
+1. [Create a new Extend Override App on Admin Portal](https://docs.accelbyte.io/gaming-services/services/extend/override-ags-feature/getting-started-with-cloudsave-validator-customization/#create-the-extend-app). Keep the `Repository URI`.
+
+2. Download and setup [extend-helper-cli](https://github.com/AccelByte/extend-helper-cli/) (only if it has not been done previously).
+
+3. Perform docker login with `extend-helper-cli` using the following command.
+
+   ```
+   extend-helper-cli dockerlogin --namespace <my-game> --app <my-app> --login
+   ```
+
+   > :exclamation: For your convenience, the above `extend-helper-cli` command can also be 
+   copied from `Repository Authentication Command` under the corresponding app detail page.
+
+4. Build and push sample app docker image to AccelByte ECR using the following command.
+   
+   ```
+   extend-helper-cli image-upload --work-dir <my-project-dir> --namespace <my-game> --app <my-app> --image-tag v0.0.1
+   ```
+
+   > :warning: Make sure to perform docker login (step 3) before executing the above command.
+
+5. Open Admin Portal, go to **Extend** -> **Overridable Features**. And then select the extend app.
+
+6. To deploy selected image tag, click **Image Version History** and select 
+   desired image tag to be deployed.
+
+7. Click **Deploy Image**, confirm the deployment and go back to App Detail by 
+   clicking **Cancel**.
+
+8. Wait until app status is running.
+
+## Next Step
+
+Proceed to modify this template project and implement your own custom functions.
