@@ -159,14 +159,6 @@ setup steps.
    GCP_RETRY=3                                                 # GCP Retry to get instance
    GCP_WAIT_GET_IP=1                                           # GCP wait time to get the instance IP in seconds
    ```
-      the image only can run 1 server gcpvm or gamelift
-
-## Build
-
-```
-   docker build -f Dockerfilegamelift . // this is use for gamelift
-   docker build -f Dockerfilegamelift . // this is use for gcpvm
-```
 
 3. Access to AccelByte Gaming Services environment.
 a. Base URL: https://prod.gamingservices.accelbyte.io/admin
@@ -174,9 +166,12 @@ a. Base URL: https://prod.gamingservices.accelbyte.io/admin
 ## Building
 
 To build this sample app, use the following command.
+the image only can run 1 server gcpvm or gamelift
 
 ```
 make build
+docker build -f Dockerfilegamelift . // this is use for gamelift
+docker build -f Dockerfilegamelift . // this is use for gcpvm
 ```
 
 ## Running
