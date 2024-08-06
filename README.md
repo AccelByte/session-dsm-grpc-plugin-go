@@ -169,7 +169,7 @@ To build this sample app, use the following command.
 the image only can run 1 server gcpvm or gamelift
 
 ```
-make build
+make proto //for generate session-dsm_grpc.pb.go
 docker build -f Dockerfilegamelift . // this is use for gamelift
 docker build -f Dockerfilegamelift . // this is use for gcpvm
 ```
@@ -240,6 +240,12 @@ public IP, we can use something like [ngrok](https://ngrok.com/).
 
 > :warning: **Ngrok free plan has some limitations**: You may want to use paid plan if the traffic is high.
 
+4. in admin portal go to -> Multiplayer > Matchmaking > Session Configuration. Click on the Add Session Template button. Select the Server configuration to be a DS - Custom. Then, select the Custom URL option and provide the ngrok forwarding URL from step 3.
+
+5. create gamesession or do matchmaking
+
+6. in Sessions and Parties - > check in session detail base on session id -> if ds status available check your server in GCPVM or gamelift
+
 ### Test Observability
 
 To be able to see the how the observability works in this sample app locally, there are few things that need be setup before performing tests.
@@ -276,7 +282,7 @@ After done testing, you may want to deploy this app to `AccelByte Gaming Service
 4. Build and push sample app docker image to AccelByte ECR using the following command.
    
    ```
-   extend-helper-cli image-upload --work-dir <my-project-dir> --namespace <my-game> --app <my-app> --image-tag v0.0.1
+   extend-helper-cli image-upload --work-dir <my-project-dir> --namespace <my-game> -f <Dockerfilegcpvm or Dockerfilegamelift> --app <my-app> --image-tag v0.0.1
    ```
 
    > :warning: Make sure to perform docker login (step 3) before executing the above command.
@@ -290,7 +296,3 @@ After done testing, you may want to deploy this app to `AccelByte Gaming Service
    clicking **Cancel**.
 
 8. Wait until app status is running.
-
-## Next Step
-
-Proceed to modify this template project and implement your own custom functions.
