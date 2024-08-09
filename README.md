@@ -118,7 +118,7 @@ custom functions for session dsm grpc plugin payloads.
 
    a. Base URL
    
-      - For `Starter` tier e.g.  https://prod.gamingservices.accelbyte.io
+      - Sample URL for AGS Shared Cloud customers: https://spaceshooter.prod.gamingservices.accelbyte.io
       
    b. [Create a Game Namespace](https://docs.accelbyte.io/gaming-services/tutorials/how-to/create-a-game-namespace/) if you don't have one yet. Keep the `Namespace ID`.
 
