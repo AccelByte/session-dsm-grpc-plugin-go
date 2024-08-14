@@ -11,24 +11,23 @@ flowchart LR
    CL --- SV
 ```
 
-`AccelByte Gaming Services` (AGS) features can be customized with 
-`Extend Override` apps. An `Extend Override` app is a `gRPC server` which 
+`AccelByte Gaming Services` (AGS) features can be customized using 
+`Extend Override` apps. An `Extend Override` app is a gRPC server which 
 contains one or more custom functions which can be called by AGS 
-instead of the default functions.
+instead of its default functions.
 
 ## Overview
 
-This repository serves as a template project for an `Extend Override` 
-app for `session dsm grpc plugin server` written in `Go`. You can clone this repository
-and start implementing custom functions which can then be called by AGS.
+This repository provides a project template to create an `Extend Override` 
+app for `session dsm grpc plugin server` written in `Go`. It includes an example of how the
+custom functions can be implemented. It also includes the essential 
+gRPC server authentication and authorization to ensure security. Additionally, 
+it comes with built-in instrumentation for observability, ensuring that metrics, 
+traces, and logs are available upon deployment.
 
-By using this repository as a template project, you will get the recommended 
-authentication and authorization implemented out-of-the-box. You will also get 
-some instrumentation for observability so that metrics, traces, and 
-logs will be available when the app is deployed.
-
-As an example to get you started, this template project contains sample 
-custom functions for session dsm grpc plugin payloads.
+You can clone this repository to begin developing your own `Extend Override` 
+app for `session dsm grpc plugin server`. Simply modify this project by implementing
+your own logic for the custom functions.
 
 ## Prerequisites
 
@@ -126,8 +125,7 @@ custom functions for session dsm grpc plugin payloads.
 
 ## Setup
 
-To be able to run the sample custom functions, you will need to follow these 
-setup steps.
+To be able to run this app, you will need to follow these setup steps.
 
 1. Create a docker compose `.env` file by copying the content of 
    [.env.template](.env.template) file.
@@ -165,18 +163,18 @@ a. Base URL: https://prod.gamingservices.accelbyte.io/admin
 
 ## Building
 
-To build this sample app, use the following command.
+To build this app, use the following command.
 the image only can run 1 server gcpvm or gamelift
 
 ```
 make proto //for generate session-dsm_grpc.pb.go
 docker build -f Dockerfilegamelift . // this is use for gamelift
-docker build -f Dockerfilegamelift . // this is use for gcpvm
+docker build -f Dockerfilegcpvm . // this is use for gcpvm
 ```
 
 ## Running
 
-To (build and) run this sample app in a container, use the following command.
+To (build and) run this app in a container, use the following command.
 
 ```
 docker-compose -f docker-compose-gamelift.yaml up --build // this is for gamelift server
@@ -187,9 +185,9 @@ docker-compose -f docker-compose-gcpvm.yaml up --build // this is for gcp server
 
 ### Test in Local Development Environment
 
-The custom functions in this sample app can be tested locally using [postman](https://www.postman.com/).
+The custom functions in this app can be tested locally using [postman](https://www.postman.com/).
 
-1. Run this `gRPC server` sample app by using the command below.
+1. Run this app by using the command below.
 
    ```shell
    docker-compose -f docker-compose-gamelift.yaml up --build // this is for gamelift server
@@ -198,7 +196,7 @@ The custom functions in this sample app can be tested locally using [postman](ht
 
 2. Open `postman`, create a new `gRPC request`, and enter `localhost:6565` as server URL (tutorial [here](https://blog.postman.com/postman-now-supports-grpc/)). 
 
-3. In `postman`, continue by selecting `CreateGameSession` grpc call method and click `Invoke` button, this will start stream connection to grpc server sample app.
+3. In `postman`, continue by selecting `CreateGameSession` grpc call method and click `Invoke` button, this will start stream connection to the gRPC server.
 4. In `postman`, continue sending parameters first to specify number of players in a match by copying sample `json` below and click `Send`.
 
    ```json
@@ -219,11 +217,11 @@ The custom functions in this sample app can be tested locally using [postman](ht
 
 ### Test with AccelByte Gaming Services
 
-For testing this sample app which is running locally with AGS,
+For testing this app which is running locally with AGS,
 the `gRPC server` needs to be exposed to the internet. To do this without requiring 
 public IP, we can use something like [ngrok](https://ngrok.com/).
 
-1. Run this `gRPC server` sample app by using command below.
+1. Run this app by using command below.
 
    ```shell
    docker-compose -f docker-compose-gamelift.yaml up --build // this is for gamelift server
@@ -232,7 +230,7 @@ public IP, we can use something like [ngrok](https://ngrok.com/).
 
 2. Sign-in/sign-up to [ngrok](https://ngrok.com/) and get your auth token in `ngrok` dashboard.
 
-3. In this sample app root directory, run the following helper command to expose `gRPC server` port in local development environment to the internet. Take a note of the `ngrok` forwarding URL e.g. `http://0.tcp.ap.ngrok.io:xxxxx`.
+3. In this app root directory, run the following helper command to expose `gRPC server` port in local development environment to the internet. Take a note of the `ngrok` forwarding URL e.g. `http://0.tcp.ap.ngrok.io:xxxxx`.
 
    ```
    make ngrok NGROK_AUTHTOKEN=xxxxxxxxxxx
@@ -245,22 +243,6 @@ public IP, we can use something like [ngrok](https://ngrok.com/).
 5. create gamesession or do matchmaking
 
 6. in Sessions and Parties - > check in session detail base on session id -> if ds status available check your server in GCPVM or gamelift
-
-### Test Observability
-
-To be able to see the how the observability works in this sample app locally, there are few things that need be setup before performing tests.
-
-1. Clone and run [session-dsm-grpc-plugin-go](github.com/AccelByte/session-dsm-grpc-plugin-go) sample app. 
-
-   ```
-   git clone https://github.com/AccelByte/session-dsm-grpc-plugin-go.git
-   cd grpc-plugin-dependencies
-   docker-compose up
-   ```
-
-   > :exclamation: More information about [session-dsm-grpc-plugin-go](https://github.com/AccelByte/session-dsm-grpc-plugin-go) 
-
-3. Perform testing. For example, by following [Test in Local Development Environment](#test-in-local-development-environment) or [Test with AccelByte Gaming Services](#test-with-accelbyte-gaming-services).
 
 ## Deploying
 
@@ -279,7 +261,7 @@ After done testing, you may want to deploy this app to `AccelByte Gaming Service
    > :exclamation: For your convenience, the above `extend-helper-cli` command can also be 
    copied from `Repository Authentication Command` under the corresponding app detail page.
 
-4. Build and push sample app docker image to AccelByte ECR using the following command.
+4. Build and push app docker image to AccelByte ECR using the following command.
    
    ```
    extend-helper-cli image-upload --work-dir <my-project-dir> --namespace <my-game> -f <Dockerfilegcpvm or Dockerfilegamelift> --app <my-app> --image-tag v0.0.1
@@ -296,3 +278,7 @@ After done testing, you may want to deploy this app to `AccelByte Gaming Service
    clicking **Cancel**.
 
 8. Wait until app status is running.
+
+## Next Step
+
+Proceed to modify this project template and implement your own custom functions.
