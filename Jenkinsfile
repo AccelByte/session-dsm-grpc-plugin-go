@@ -58,7 +58,8 @@ pipeline {
     }
     stage('Build') {
       steps {
-        sh "make build"
+        sh "docker build -f Dockerfilegamelift ."
+        sh "docker build -f Dockerfilegcpvm ."
       }
     }
     // stage('Test') {
