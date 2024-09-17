@@ -17,3 +17,7 @@ proto:
 			--go_opt=paths=source_relative --go-grpc_out=pkg/pb \
 			--go-grpc_opt=paths=source_relative pkg/proto/*.proto
 
+test_docs_broken_links:
+	@test -n "$(SDK_MD_CRAWLER_PATH)" || (echo "SDK_MD_CRAWLER_PATH is not set" ; exit 1)
+	bash "$(SDK_MD_CRAWLER_PATH)/md-crawler.sh" \
+			-i README.md
