@@ -119,7 +119,7 @@ your own logic for the custom functions.
    
       - Sample URL for AGS Shared Cloud customers: https://spaceshooter.prod.gamingservices.accelbyte.io
       
-   b. [Create a Game Namespace](https://docs.accelbyte.io/gaming-services/tutorials/how-to/create-a-game-namespace/) if you don't have one yet. Keep the `Namespace ID`.
+   b. [Create a Game Namespace](https://docs.accelbyte.io/gaming-services/tutorials/how-to/namespaces/create-a-game-namespace/) if you don't have one yet. Keep the `Namespace ID`.
 
    c. [Create an OAuth Client](https://docs.accelbyte.io/gaming-services/services/access/authorization/manage-access-control-for-applications/#create-an-iam-client) with confidential client type. Keep the `Client ID` and `Client Secret`.
 
@@ -194,10 +194,11 @@ The custom functions in this app can be tested locally using [postman](https://w
    docker-compose -f docker-compose-gcpvm.yaml up --build // this is for gcp server
    ```
 
-2. Open `postman`, create a new `gRPC request`, and enter `localhost:6565` as server URL (tutorial [here](https://blog.postman.com/postman-now-supports-grpc/)). 
+2. Open `postman`, create a new `gRPC request`, and enter `localhost:6565` as server URL.
 
 3. In `postman`, continue by selecting `CreateGameSession` grpc call method and click `Invoke` button, this will start stream connection to the gRPC server.
-4. In `postman`, continue sending parameters first to specify number of players in a match by copying sample `json` below and click `Send`.
+
+4. Still in `postman`, continue sending parameters first to specify number of players in a match by copying sample `json` below and click `Send`.
 
    ```json
    {
@@ -236,13 +237,13 @@ public IP, we can use something like [ngrok](https://ngrok.com/).
    make ngrok NGROK_AUTHTOKEN=xxxxxxxxxxx
    ```
 
-> :warning: **Ngrok free plan has some limitations**: You may want to use paid plan if the traffic is high.
-
-4. in admin portal go to -> Multiplayer > Matchmaking > Session Configuration. Click on the Add Session Template button. Select the Server configuration to be a DS - Custom. Then, select the Custom URL option and provide the ngrok forwarding URL from step 3.
+4. In admin portal go to -> Multiplayer > Matchmaking > Session Configuration. Click on the Add Session Template button. Select the Server configuration to be a DS - Custom. Then, select the Custom URL option and provide the ngrok forwarding URL from step 3.
 
 5. create gamesession or do matchmaking
 
 6. in Sessions and Parties - > check in session detail base on session id -> if ds status available check your server in GCPVM or gamelift
+
+> :warning: **Ngrok free plan has some limitations**: You may want to use paid plan if the traffic is high.
 
 ## Deploying
 
