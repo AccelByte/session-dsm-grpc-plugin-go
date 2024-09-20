@@ -167,7 +167,6 @@ To build this app, use the following command.
 the image only can run 1 server gcpvm or gamelift
 
 ```
-make proto //for generate session-dsm_grpc.pb.go
 docker build -f Dockerfilegamelift . // this is use for gamelift
 docker build -f Dockerfilegcpvm . // this is use for gcpvm
 ```
