@@ -1,0 +1,181 @@
+// Copyright (c) 2023 AccelByte Inc. All Rights Reserved.
+// This is licensed software from AccelByte Inc, for limitations
+// and restrictions contact your company contract manager.
+
+package sessiondsmdemo
+
+import (
+	"fmt"
+	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/utils"
+	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclient/configuration_template"
+	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclient/game_session"
+	"strconv"
+	"time"
+
+	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/factory"
+	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/repository"
+	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/session"
+	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclientmodels"
+)
+
+type SessionDataUnit struct {
+	CLIConfig  *Config
+	ConfigRepo repository.ConfigRepository
+	TokenRepo  repository.TokenRepository
+	sessionID  string
+}
+
+var configName = fmt.Sprintf("session_dsm_grpc_go_%s", RandomString("1234567890", 3))
+
+func (p *SessionDataUnit) CreateSessionConfiguration() error {
+	servicePluginCfgWrapper := session.ConfigurationTemplateService{
+		Client:           factory.NewSessionClient(p.ConfigRepo),
+		ConfigRepository: p.ConfigRepo,
+		TokenRepository:  p.TokenRepo,
+	}
+
+	// TODO clean up first
+
+	body := &sessionclientmodels.ApimodelsCreateConfigurationTemplateRequest{
+		ClientVersion:    Ptr("test"),
+		Deployment:       Ptr("test"),
+		Persistent:       Ptr(false),
+		TextChat:         Ptr(false),
+		Name:             Ptr(configName),
+		MinPlayers:       Ptr(int32(1)),
+		MaxPlayers:       Ptr(int32(2)),
+		Joinability:      Ptr("OPEN"),
+		InviteTimeout:    Ptr(int32(60)),
+		InactiveTimeout:  Ptr(int32(60)),
+		AutoJoin:         true,
+		Type:             Ptr("DS"),
+		DsSource:         "custom",
+		DsManualSetReady: false,
+		RequestedRegions: []string{"us-west-2"},
+	}
+
+	if p.CLIConfig.GRPCServerURL != "" {
+		fmt.Printf("(Custom Host: %s) ", p.CLIConfig.GRPCServerURL)
+
+		body.CustomURLGRPC = p.CLIConfig.GRPCServerURL
+
+		_, err := servicePluginCfgWrapper.AdminCreateConfigurationTemplateV1Short(&configuration_template.AdminCreateConfigurationTemplateV1Params{
+			Body:      body,
+			Namespace: p.CLIConfig.ABNamespace,
+		})
+
+		return err
+	}
+
+	if p.CLIConfig.ExtendAppName != "" {
+		fmt.Printf("(Extend App: %s) ", p.CLIConfig.ExtendAppName)
+
+		body.AppName = p.CLIConfig.ExtendAppName
+
+		_, err := servicePluginCfgWrapper.AdminCreateConfigurationTemplateV1Short(&configuration_template.AdminCreateConfigurationTemplateV1Params{
+			Body:      body,
+			Namespace: p.CLIConfig.ABNamespace,
+		})
+
+		return err
+	}
+
+	return nil
+}
+
+func (p *SessionDataUnit) CreateGameSession() error {
+	servicePluginCfgWrapper := session.GameSessionService{
+		Client:           factory.NewSessionClient(p.ConfigRepo),
+		ConfigRepository: p.ConfigRepo,
+		TokenRepository:  p.TokenRepo,
+	}
+
+	createGame, err := servicePluginCfgWrapper.CreateGameSessionShort(&game_session.CreateGameSessionParams{
+		Body: &sessionclientmodels.ApimodelsCreateGameSessionRequest{
+			ConfigurationName: Ptr(configName),
+		},
+		Namespace: p.CLIConfig.ABNamespace,
+	})
+	if err != nil {
+		return err
+	}
+
+	p.sessionID = *createGame.ID
+
+	return nil
+}
+
+func (p *SessionDataUnit) GetGameSession() error {
+	servicePluginCfgWrapper := session.GameSessionService{
+		Client:           factory.NewSessionClient(p.ConfigRepo),
+		ConfigRepository: p.ConfigRepo,
+		TokenRepository:  p.TokenRepo,
+	}
+
+	isDsAvailable := false
+	dsChecks := 0
+	maxDsChecks, errEnv := strconv.Atoi(utils.GetEnv("DS_CHECK_COUNT", "10"))
+	if errEnv != nil {
+		return errEnv
+	}
+	checkInterval, errEnv2 := strconv.Atoi(utils.GetEnv("DS_WAIT_INTERVAL", "0.5"))
+	if errEnv2 != nil {
+		return errEnv2
+	}
+
+	// Loop until the DSInformation.StatusV2 becomes "AVAILABLE" or max checks are reached
+	for dsChecks < maxDsChecks {
+		getGameSession, err := servicePluginCfgWrapper.GetGameSessionShort(&game_session.GetGameSessionParams{
+			Namespace: p.CLIConfig.ABNamespace,
+			SessionID: p.sessionID,
+		})
+		if err != nil {
+			return err
+		}
+
+		if getGameSession.DSInformation.StatusV2 == "AVAILABLE" {
+			isDsAvailable = true
+			fmt.Println(" DS is AVAILABLE")
+
+			break
+		}
+
+		time.Sleep(time.Duration(checkInterval) * time.Second)
+
+		dsChecks++
+
+		fmt.Printf("check %d/%d: DS not available yet. Retrying...\n", dsChecks, maxDsChecks)
+	}
+
+	if !isDsAvailable {
+		return fmt.Errorf("dedicated Server is not available after maximum checks (%S)", maxDsChecks)
+	}
+
+	return nil
+}
+
+func (p *SessionDataUnit) DeleteGameSession() error {
+	servicePluginCfgWrapper := session.GameSessionService{
+		Client:           factory.NewSessionClient(p.ConfigRepo),
+		ConfigRepository: p.ConfigRepo,
+		TokenRepository:  p.TokenRepo,
+	}
+
+	return servicePluginCfgWrapper.DeleteGameSessionShort(&game_session.DeleteGameSessionParams{
+		SessionID: p.sessionID,
+		Namespace: p.CLIConfig.ABNamespace,
+	})
+}
+
+func (p *SessionDataUnit) UnsetSessionServiceGrpcTarget() error {
+	servicePluginCfgWrapper := session.ConfigurationTemplateService{
+		Client:           factory.NewSessionClient(p.ConfigRepo),
+		ConfigRepository: p.ConfigRepo,
+		TokenRepository:  p.TokenRepo,
+	}
+
+	return servicePluginCfgWrapper.AdminDeleteConfigurationTemplateV1Short(&configuration_template.AdminDeleteConfigurationTemplateV1Params{
+		Name:      configName,
+		Namespace: p.CLIConfig.ABNamespace,
+	})
+}
