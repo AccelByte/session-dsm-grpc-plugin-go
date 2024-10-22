@@ -127,57 +127,51 @@ your own logic for the custom functions.
 
 To be able to run this app, you will need to follow these setup steps.
 
-1. Create a docker compose `.env` file by copying the content of 
+1. Create a docker compose `.env` file by copying the content of
    [.env.template](.env.template) file.
 
-   > :warning: **The host OS environment variables have higher precedence compared to `.env` file variables**: If the variables in `.env` file do not seem to take 
-   effect properly, check if there are host OS environment variables with the 
-   same name. See documentation about 
-   [docker compose environment variables precedence](https://docs.docker.com/compose/how-tos/environment-variables/envvars-precedence/) 
+   > :warning: **The host OS environment variables have higher precedence compared to `.env` file variables**: If the variables in `.env` file do not seem to take
+   effect properly, check if there are host OS environment variables with the
+   same name. See documentation about
+   [docker compose environment variables precedence](https://docs.docker.com/compose/how-tos/environment-variables/envvars-precedence/)
    for more details.
 
 2. Fill in the required environment variables in `.env` file as shown below.
 
    ```
-   AB_BASE_URL=https://prod.gamingservices.accelbyte.io      # Base URL of AccelByte Gaming Services prod environment
+   AB_BASE_URL=https://prod.gamingservices.accelbyte.io        # Base URL of AccelByte Gaming Services prod environment
    AB_CLIENT_ID='xxxxxxxxxx'                                   # Client ID from the Prerequisites section
    AB_CLIENT_SECRET='xxxxxxxxxx'                               # Client Secret from the Prerequisites section
    PLUGIN_GRPC_SERVER_AUTH_ENABLED=false                       # Enable or disable access token and permission verification
+   DS_PROVIDER='DEMO'                                          # Select DS implementation, DEMO, GAMELIFT, or GCP
    
    // AWS Gamelift Config
-   AWS_ACCESS_KEY_ID='xxxxxxx'                                 # aws access key if using gamelift
-   AWS_SECRET_ACCESS_KEY='xxxxxx'                              # aws secret key if using gamelift
-   GAMELIFT_REGION='us-west-2'                                 # aws secret key if using gamelift region
-   
+   AWS_ACCESS_KEY_ID='xxxxxxx'                                 # AWS access key if using gamelift
+   AWS_SECRET_ACCESS_KEY='xxxxxx'                              # AWS secret key if using gamelift
+   AWS_REGION='us-west-2'                                      # AWS region for gamelift
+   GAMELIFT_REGION='us-west-2'                                 # alias of AWS_REGION
+      
    // GCP Config
+   GCP_SERVICE_ACCOUNT_FILE='./account.json'                   # GCP service account file in json format
    GCP_PROJECT_ID=xxxxx-xxxx                                   # GCP Project ID
    GCP_NETWORK=public                                          # GCP Network type
    GCP_MACHINE_TYPE=e2-micro                                   # GCP intance type
    GCP_REPOSITORY=asia-southeast1-docker.pkg.dev/xxxx/gcpvm    # GCP Repository
    GCP_RETRY=3                                                 # GCP Retry to get instance
    GCP_WAIT_GET_IP=1                                           # GCP wait time to get the instance IP in seconds
+   GCP_IMAGE_OPEN_PORT=8080                                    # Dedicated server open port
    ```
 
 3. Access to AccelByte Gaming Services environment.
-a. Base URL: https://prod.gamingservices.accelbyte.io/admin
 
-## Building
-
-To build this app, use the following command.
-the image only can run 1 server gcpvm or gamelift
-
-```
-docker build -f Dockerfilegamelift . // this is use for gamelift
-docker build -f Dockerfilegcpvm . // this is use for gcpvm
-```
+   a. Base URL: https://prod.gamingservices.accelbyte.io/admin
 
 ## Running
 
 To (build and) run this app in a container, use the following command.
 
 ```
-docker-compose -f docker-compose-gamelift.yaml up --build // this is for gamelift server
-docker-compose -f docker-compose-gcpvm.yaml up --build // this is for gcp server
+docker compose up --build
 ```
 
 ## Testing
@@ -189,8 +183,7 @@ The custom functions in this app can be tested locally using [postman](https://w
 1. Run this app by using the command below.
 
    ```shell
-   docker-compose -f docker-compose-gamelift.yaml up --build // this is for gamelift server
-   docker-compose -f docker-compose-gcpvm.yaml up --build // this is for gcp server
+   docker compose up --build
    ```
 
 2. Open `postman`, create a new `gRPC request`, and enter `localhost:6565` as server URL.
@@ -224,8 +217,7 @@ public IP, we can use something like [ngrok](https://ngrok.com/).
 1. Run this app by using command below.
 
    ```shell
-   docker-compose -f docker-compose-gamelift.yaml up --build // this is for gamelift server
-   docker-compose -f docker-compose-gcpvm.yaml up --build // this is for gcp server
+   docker-compose -f docker-compose.yaml up --build
    ```
 
 2. Sign-in/sign-up to [ngrok](https://ngrok.com/) and get your auth token in `ngrok` dashboard.
@@ -264,7 +256,7 @@ After done testing, you may want to deploy this app to `AccelByte Gaming Service
 4. Build and push app docker image to AccelByte ECR using the following command.
    
    ```
-   extend-helper-cli image-upload --work-dir <my-project-dir> --namespace <my-game> -f <Dockerfilegcpvm or Dockerfilegamelift> --app <my-app> --image-tag v0.0.1
+   extend-helper-cli image-upload --work-dir <my-project-dir> --namespace <my-game> --app <my-app> --image-tag v0.0.1
    ```
 
    > :warning: Make sure to perform docker login (step 3) before executing the above command.
