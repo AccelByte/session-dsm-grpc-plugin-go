@@ -150,7 +150,7 @@ To be able to run this app, you will need to follow these setup steps.
    GAMELIFT_REGION='us-west-2'                                 # aws secret key if using gamelift region
    
    // GCP Config
-	GCP_PROJECT_ID=xxxxx-xxxx                                   # GCP Project ID
+   GCP_PROJECT_ID=xxxxx-xxxx                                   # GCP Project ID
    GCP_NETWORK=public                                          # GCP Network type
    GCP_MACHINE_TYPE=e2-micro                                   # GCP intance type
    GCP_REPOSITORY=asia-southeast1-docker.pkg.dev/xxxx/gcpvm    # GCP Repository

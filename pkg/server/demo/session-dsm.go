@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
-	"errors"
-	"session-dsm-grpc-plugin/pkg/client/awsgamelift"
+	"fmt"
+	"session-dsm-grpc-plugin/pkg/client"
 	"session-dsm-grpc-plugin/pkg/constants"
 	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
 	"session-dsm-grpc-plugin/pkg/utils/envelope"
@@ -11,42 +11,25 @@ import (
 
 type SessionDSM struct {
 	sessiondsm.UnimplementedSessionDsmServer
-	ClientGamelift *awsgamelift.AwsGamelift
+	Demo *client.Client
 }
 
 func (s *SessionDSM) CreateGameSession(ctx context.Context, req *sessiondsm.RequestCreateGameSession) (*sessiondsm.ResponseCreateGameSession, error) {
 	scope := envelope.NewRootScope(ctx, "CreateGameSession", "")
 	defer scope.Finish()
-	var response *awsgamelift.GameSessionResult
 	var err error
-
-	if len(req.RequestedRegion) == 0 {
-		return nil, errors.New("need provide requested region")
-	}
-
-	for _, region := range req.RequestedRegion {
-		response, err = s.ClientGamelift.CreateGameSession(scope, req.Deployment, req.SessionId, req.SessionData, region, int(req.MaximumPlayer))
-		if err != nil {
-			continue
-		}
-		break
-	}
-
-	if err != nil {
-		return nil, err
-	}
 
 	responses := &sessiondsm.ResponseCreateGameSession{
 		SessionId:     req.SessionId,
 		Namespace:     req.Namespace,
-		Deployment:    response.FleetID,
+		Deployment:    req.Deployment,
 		SessionData:   req.SessionData,
 		Status:        constants.ServerStatusReady,
-		Ip:            response.IPAddress,
-		Port:          int64(response.Port),
-		ServerId:      response.GameSessionARN,
-		Source:        constants.GameServerSourceGamelift,
-		Region:        response.Location,
+		Ip:            "10.10.10.11",
+		Port:          int64(8080),
+		ServerId:      fmt.Sprintf("demo-local-%s", req.SessionId),
+		Source:        "DEMO",
+		Region:        req.RequestedRegion[0],
 		ClientVersion: req.ClientVersion,
 		GameMode:      req.GameMode,
 	}

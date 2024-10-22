@@ -30,6 +30,8 @@ type Config struct {
 	ABBaseURL      string `env:"AB_BASE_URL" envDocs:"Base URL of AccelByte Gaming Services" envDefault:""`
 	ABClientId     string `env:"AB_CLIENT_ID" envDocs:"Client ID from the Prerequisites section" envDefault:""`
 	ABClientSecret string `env:"AB_CLIENT_SECRET" envDocs:"Client Secret from the Prerequisites section" envDefault:""`
+	// Switching ds provider
+	DsProvider string `env:"DS_PROVIDER" envDocs:"Ds Provider to choose (DEMO, GAMELIFT, GCP)" envDefault:"DEMO"`
 }
 
 // HelpDocs returns documentation of Config based on field tags.

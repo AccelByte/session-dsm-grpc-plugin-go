@@ -23,9 +23,10 @@ type SessionDataUnit struct {
 	ConfigRepo repository.ConfigRepository
 	TokenRepo  repository.TokenRepository
 	sessionID  string
+	configName string
 }
 
-var configName = fmt.Sprintf("session_dsm_grpc_go_%s", RandomString("1234567890", 3))
+var prefix = "session_dsm_grpc_go"
 
 func (p *SessionDataUnit) CreateSessionConfiguration() error {
 	servicePluginCfgWrapper := session.ConfigurationTemplateService{
@@ -34,15 +35,15 @@ func (p *SessionDataUnit) CreateSessionConfiguration() error {
 		TokenRepository:  p.TokenRepo,
 	}
 
-	// TODO clean up first
+	p.configName = fmt.Sprintf("%s_%s", prefix, RandomString("1234567890", 3))
 
 	body := &sessionclientmodels.ApimodelsCreateConfigurationTemplateRequest{
 		ClientVersion:    Ptr("test"),
 		Deployment:       Ptr("test"),
 		Persistent:       Ptr(false),
 		TextChat:         Ptr(false),
-		Name:             Ptr(configName),
-		MinPlayers:       Ptr(int32(1)),
+		Name:             Ptr(p.configName),
+		MinPlayers:       Ptr(int32(0)),
 		MaxPlayers:       Ptr(int32(2)),
 		Joinability:      Ptr("OPEN"),
 		InviteTimeout:    Ptr(int32(60)),
@@ -64,10 +65,12 @@ func (p *SessionDataUnit) CreateSessionConfiguration() error {
 			Namespace: p.CLIConfig.ABNamespace,
 		})
 
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	if p.CLIConfig.ExtendAppName != "" {
+		return nil
+	} else if p.CLIConfig.ExtendAppName != "" {
 		fmt.Printf("(Extend App: %s) ", p.CLIConfig.ExtendAppName)
 
 		body.AppName = p.CLIConfig.ExtendAppName
@@ -77,22 +80,39 @@ func (p *SessionDataUnit) CreateSessionConfiguration() error {
 			Namespace: p.CLIConfig.ABNamespace,
 		})
 
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	return nil
+		return nil
+	} else {
+		return fmt.Errorf("url or app name is not defined")
+	}
 }
 
-func (p *SessionDataUnit) CreateGameSession() error {
+func (p *SessionDataUnit) CreateGameSession(userID string) error {
 	servicePluginCfgWrapper := session.GameSessionService{
 		Client:           factory.NewSessionClient(p.ConfigRepo),
 		ConfigRepository: p.ConfigRepo,
 		TokenRepository:  p.TokenRepo,
 	}
 
+	userIDs := []string{userID}
+
 	createGame, err := servicePluginCfgWrapper.CreateGameSessionShort(&game_session.CreateGameSessionParams{
 		Body: &sessionclientmodels.ApimodelsCreateGameSessionRequest{
-			ConfigurationName: Ptr(configName),
+			ConfigurationName: Ptr(p.configName),
+			Teams: []*sessionclientmodels.ModelsTeam{
+				{
+					Parties: []*sessionclientmodels.ModelsPartyMembers{
+						{
+							PartyID: "",
+							UserIDs: userIDs,
+						},
+					},
+					UserIDs: userIDs,
+				},
+			},
 		},
 		Namespace: p.CLIConfig.ABNamespace,
 	})
@@ -118,7 +138,8 @@ func (p *SessionDataUnit) GetGameSession() error {
 	if errEnv != nil {
 		return errEnv
 	}
-	checkInterval, errEnv2 := strconv.Atoi(utils.GetEnv("DS_WAIT_INTERVAL", "0.5"))
+	checkIntervalStr := utils.GetEnv("DS_WAIT_INTERVAL", "0.5")
+	checkInterval, errEnv2 := strconv.ParseFloat(checkIntervalStr, 64)
 	if errEnv2 != nil {
 		return errEnv2
 	}
@@ -140,7 +161,7 @@ func (p *SessionDataUnit) GetGameSession() error {
 			break
 		}
 
-		time.Sleep(time.Duration(checkInterval) * time.Second)
+		time.Sleep(time.Duration(checkInterval) * 10 * time.Second)
 
 		dsChecks++
 
@@ -148,7 +169,7 @@ func (p *SessionDataUnit) GetGameSession() error {
 	}
 
 	if !isDsAvailable {
-		return fmt.Errorf("dedicated Server is not available after maximum checks (%S)", maxDsChecks)
+		return fmt.Errorf("dedicated Server is not available after maximum checks (%v)", maxDsChecks)
 	}
 
 	return nil
@@ -175,7 +196,7 @@ func (p *SessionDataUnit) UnsetSessionServiceGrpcTarget() error {
 	}
 
 	return servicePluginCfgWrapper.AdminDeleteConfigurationTemplateV1Short(&configuration_template.AdminDeleteConfigurationTemplateV1Params{
-		Name:      configName,
+		Name:      p.configName,
 		Namespace: p.CLIConfig.ABNamespace,
 	})
 }

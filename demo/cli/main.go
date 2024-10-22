@@ -135,7 +135,7 @@ func startTesting(
 
 	// 2.
 	fmt.Print("Creating game session... ")
-	err = pdu.CreateGameSession()
+	err = pdu.CreateGameSession(*userInfo.UserID)
 	if err != nil {
 		fmt.Println("[ERR]")
 
