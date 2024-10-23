@@ -15,6 +15,8 @@ trap clean_up EXIT
 
 echo '# Build and run Extend app locally'
 
+go version
+
 go build -buildvcs=false -o grpc-server
 ./grpc-server & GRPC_SERVER_PID=$!
 

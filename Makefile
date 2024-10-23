@@ -1,4 +1,4 @@
-# Copyright (c) 2022 AccelByte Inc. All Rights Reserved.
+# Copyright (c) 2024 AccelByte Inc. All Rights Reserved.
 # This is licensed software from AccelByte Inc, for limitations
 # and restrictions contact your company contract manager.
 
@@ -7,7 +7,7 @@ SHELL := /bin/bash
 IMAGE_NAME := $(shell basename "$$(pwd)")-app
 BUILDER := extend-builder
 
-GOLANG_DOCKER_IMAGE := golang:1.19
+GOLANG_DOCKER_IMAGE := golang:1.22
 
 TEST_SAMPLE_CONTAINER_NAME := sample-override-test
 
@@ -23,7 +23,7 @@ lint:
 	rm -f lint.err
 	find -type f -iname go.mod -not -path "*/.cache/*" -exec dirname {} \; | while read DIRECTORY; do \
 		echo "# $$DIRECTORY"; \
-		docker run -t --rm -u $$(id -u):$$(id -g) -v $$(pwd):/data/ -w /data/ -e GOCACHE=/data/.cache/go-build -e GOLANGCI_LINT_CACHE=/data/.cache/go-lint golangci/golangci-lint:v1.52.2\
+		docker run -t --rm -u $$(id -u):$$(id -g) -v $$(pwd):/data/ -w /data/ -e GOCACHE=/data/.cache/go-build -e GOLANGCI_LINT_CACHE=/data/.cache/go-lint golangci/golangci-lint:v1.54.1\
 				sh -c "cd $$DIRECTORY && golangci-lint -v --timeout 5m --max-same-issues 0 --max-issues-per-linter 0 --color never run || touch /data/lint.err"; \
 	done
 	[ ! -f lint.err ] || (rm lint.err && exit 1)

@@ -58,15 +58,14 @@ pipeline {
     }
     stage('Build') {
       steps {
-        sh "docker build -f Dockerfilegamelift ."
-        sh "docker build -f Dockerfilegcpvm ."
+        sh "make build"
       }
     }
-    // stage('Test') {
-    //   steps {
-    //     sh "make test"
-    //   }
-    // }
+    stage('Test') {
+      steps {
+        sh "make test"
+      }
+    }
   }
   post {
     success {

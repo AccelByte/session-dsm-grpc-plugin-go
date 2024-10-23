@@ -59,15 +59,38 @@ linters:
     - lll
     - testpackage
     - dupl
-  fast: false
+    - funlen
+    - gci
+    - godot
+    - gofumpt
+    - paralleltest
+    - tagliatelle
+    - revive
+    - unparam
+    - cyclop
+    - gomoddirectives
+    - govet
+    - nestif
+    - forcetypeassert
+    - gochecknoglobals
+    - scopelint
+    - tagalign
+    - depguard
+    - nlreturn
+    - nosnakecase
+    - godox
+
+  fast: true
 
 linters-settings:
   govet:
     check-shadowing: true
+  golint:
+    report-comments: true
   goheader:
     values:
       regexp:
-        YEAR: (2018|2019|2020|2021|2022|2023|2024|2025)(-)?(2019|2020|2021|2022|2023|2024|2025|2026)?
+        YEAR: (2018|2019|2020|2021|2022|2023|2024)(-)?(2019|2020|2021|2022|2023|2024)?
     template: |-
       Copyright (c) {{ YEAR }} AccelByte Inc. All Rights Reserved.
       This is licensed software from AccelByte Inc, for limitations

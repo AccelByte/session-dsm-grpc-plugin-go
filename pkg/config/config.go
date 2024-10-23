@@ -21,7 +21,7 @@ type Config struct {
 	AWSSecretKeyId              string `env:"AWS_SECRET_ACCESS_KEY" envDocs:"AWS Secret Key if using gamelift" envDefault:""`
 	// GCP Config
 	GCPProjectID   string `env:"GCP_PROJECT_ID" envDocs:"Project ID in GCP VM" envDefault:""`
-	GCPNetwork     string `env:"GCP_NETWORK" envDocs:"GCP Network for allow trafic and port" envDefault:""`
+	GCPNetwork     string `env:"GCP_NETWORK" envDocs:"GCP Network for allow traffic and port" envDefault:""`
 	GCPMachineType string `env:"GCP_MACHINE_TYPE" envDocs:"GCP Machine Type example e2-micro" envDefault:""`
 	GCPRepository  string `env:"GCP_REPOSITORY" envDocs:"GCP Repository URL" envDefault:""`
 	GCPRetry       int    `env:"GCP_RETRY" envDocs:"GCP Retry for get instance" envDefault:"3"`

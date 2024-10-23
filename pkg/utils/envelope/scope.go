@@ -10,10 +10,12 @@ import (
 
 	"github.com/AccelByte/go-restful-plugins/v3/pkg/trace"
 	"github.com/sirupsen/logrus"
+
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	oteltrace "go.opentelemetry.io/otel/trace"
+
 	"session-dsm-grpc-plugin/pkg/constants"
 )
 

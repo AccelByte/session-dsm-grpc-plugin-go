@@ -69,14 +69,14 @@ your own logic for the custom functions.
       ...
       ```
 
-   d. Go v1.19
+   d. Go v1.22
 
       - Follow [Go installation](https://go.dev/doc/install) instruction to install Go
 
       ```
       go version
 
-      go version go1.19.0 linux/amd64
+      go version go1.22.0 linux/amd64
       ```
 
    e. Curl

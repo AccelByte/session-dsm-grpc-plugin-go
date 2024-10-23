@@ -1,14 +1,22 @@
+// Copyright (c) 2024 AccelByte Inc. All Rights Reserved.
+// This is licensed software from AccelByte Inc, for limitations
+// and restrictions contact your company contract manager.
+
 package main
 
 import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/caarlos0/env"
-	"go.opentelemetry.io/otel/trace"
+	"log"
 	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
+	"os/signal"
 	"runtime"
+	"strings"
+
 	"session-dsm-grpc-plugin/pkg/client/awsgamelift"
 	"session-dsm-grpc-plugin/pkg/client/gcpvm"
 	"session-dsm-grpc-plugin/pkg/common"
@@ -17,29 +25,27 @@ import (
 	serverDemo "session-dsm-grpc-plugin/pkg/server/demo"
 	serverGamelift "session-dsm-grpc-plugin/pkg/server/gamelift"
 	serverGCP "session-dsm-grpc-plugin/pkg/server/gcpvm"
-	"strings"
 
 	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/factory"
 	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/iam"
+	sdkAuth "github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/utils/auth"
+	"github.com/caarlos0/env"
+	promgrpc "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/prometheus/client_golang/prometheus"
+	prometheusCollectors "github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+
 	"go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
-	"log"
-	"net/http"
-	_ "net/http/pprof"
-	"os/signal"
-
-	sdkAuth "github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/utils/auth"
-	promgrpc "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
-	prometheusCollectors "github.com/prometheus/client_golang/prometheus/collectors"
 )
 
 const (
