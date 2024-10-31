@@ -138,7 +138,7 @@ func (p *SessionDataUnit) GetGameSession() error {
 	if errEnv != nil {
 		return errEnv
 	}
-	checkIntervalStr := utils.GetEnv("DS_WAIT_INTERVAL", "0.5")
+	checkIntervalStr := utils.GetEnv("DS_WAIT_INTERVAL", "1")
 	checkInterval, errEnv2 := strconv.ParseFloat(checkIntervalStr, 64)
 	if errEnv2 != nil {
 		return errEnv2
