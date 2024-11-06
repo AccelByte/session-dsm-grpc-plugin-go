@@ -18,7 +18,7 @@ COPY --from=proto /build/pkg/pb pkg/pb
 RUN env GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o session-dsm-grpc-plugin-server-go_$TARGETOS-$TARGETARCH
 
 
-FROM alpine:3.19.0
+FROM alpine:3.19
 ARG TARGETOS
 ARG TARGETARCH
 WORKDIR /app

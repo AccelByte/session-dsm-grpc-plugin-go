@@ -1,6 +1,6 @@
 FROM ngrok/ngrok as ngrok_image
 
-FROM alpine:3.18
+FROM alpine:3.19
 ENV GO_VERSION=1.22.0
 
 WORKDIR /workspace
