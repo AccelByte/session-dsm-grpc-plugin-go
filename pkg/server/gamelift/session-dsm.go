@@ -53,6 +53,7 @@ func (s *SessionDSM) CreateGameSession(ctx context.Context, req *sessiondsm.Requ
 		Region:        response.Location,
 		ClientVersion: req.ClientVersion,
 		GameMode:      req.GameMode,
+		CreatedRegion: response.Location,
 	}
 	return responses, err
 }
