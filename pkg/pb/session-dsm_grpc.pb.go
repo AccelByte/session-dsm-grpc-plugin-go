@@ -28,6 +28,7 @@ const _ = grpc.SupportPackageIsVersion7
 type SessionDsmClient interface {
 	CreateGameSession(ctx context.Context, in *RequestCreateGameSession, opts ...grpc.CallOption) (*ResponseCreateGameSession, error)
 	TerminateGameSession(ctx context.Context, in *RequestTerminateGameSession, opts ...grpc.CallOption) (*ResponseTerminateGameSession, error)
+	CreateGameSessionAsync(ctx context.Context, in *RequestCreateGameSession, opts ...grpc.CallOption) (*ResponseCreateGameSessionAsync, error)
 }
 
 type sessionDsmClient struct {
@@ -56,12 +57,22 @@ func (c *sessionDsmClient) TerminateGameSession(ctx context.Context, in *Request
 	return out, nil
 }
 
+func (c *sessionDsmClient) CreateGameSessionAsync(ctx context.Context, in *RequestCreateGameSession, opts ...grpc.CallOption) (*ResponseCreateGameSessionAsync, error) {
+	out := new(ResponseCreateGameSessionAsync)
+	err := c.cc.Invoke(ctx, "/accelbyte.session.sessiondsm.SessionDsm/CreateGameSessionAsync", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SessionDsmServer is the server API for SessionDsm service.
 // All implementations must embed UnimplementedSessionDsmServer
 // for forward compatibility
 type SessionDsmServer interface {
 	CreateGameSession(context.Context, *RequestCreateGameSession) (*ResponseCreateGameSession, error)
 	TerminateGameSession(context.Context, *RequestTerminateGameSession) (*ResponseTerminateGameSession, error)
+	CreateGameSessionAsync(context.Context, *RequestCreateGameSession) (*ResponseCreateGameSessionAsync, error)
 	mustEmbedUnimplementedSessionDsmServer()
 }
 
@@ -74,6 +85,9 @@ func (UnimplementedSessionDsmServer) CreateGameSession(context.Context, *Request
 }
 func (UnimplementedSessionDsmServer) TerminateGameSession(context.Context, *RequestTerminateGameSession) (*ResponseTerminateGameSession, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TerminateGameSession not implemented")
+}
+func (UnimplementedSessionDsmServer) CreateGameSessionAsync(context.Context, *RequestCreateGameSession) (*ResponseCreateGameSessionAsync, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateGameSessionAsync not implemented")
 }
 func (UnimplementedSessionDsmServer) mustEmbedUnimplementedSessionDsmServer() {}
 
@@ -124,6 +138,24 @@ func _SessionDsm_TerminateGameSession_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SessionDsm_CreateGameSessionAsync_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestCreateGameSession)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionDsmServer).CreateGameSessionAsync(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/accelbyte.session.sessiondsm.SessionDsm/CreateGameSessionAsync",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionDsmServer).CreateGameSessionAsync(ctx, req.(*RequestCreateGameSession))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SessionDsm_ServiceDesc is the grpc.ServiceDesc for SessionDsm service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -138,6 +170,10 @@ var SessionDsm_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TerminateGameSession",
 			Handler:    _SessionDsm_TerminateGameSession_Handler,
+		},
+		{
+			MethodName: "CreateGameSessionAsync",
+			Handler:    _SessionDsm_CreateGameSessionAsync_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

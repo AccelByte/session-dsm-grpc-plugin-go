@@ -8,6 +8,9 @@ import (
 	"errors"
 	"session-dsm-grpc-plugin/pkg/utils/envelope"
 
+	sessionClient "session-dsm-grpc-plugin/pkg/session"
+
+	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/iam"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -21,14 +24,19 @@ const (
 )
 
 type AwsGamelift struct {
-	credential *credentials.Credentials
-	region     string
+	credential    *credentials.Credentials
+	region        string
+	sessionClient *sessionClient.SessionClient
+	iamClient     *iam.OAuth20Service
 }
 
-func New(credential *credentials.Credentials, gameliftRegion string) *AwsGamelift {
+func New(credential *credentials.Credentials, gameliftRegion string,
+	iamClient *iam.OAuth20Service, sessionClient *sessionClient.SessionClient) *AwsGamelift {
 	return &AwsGamelift{
-		credential: credential,
-		region:     gameliftRegion,
+		credential:    credential,
+		region:        gameliftRegion,
+		iamClient:     iamClient,
+		sessionClient: sessionClient,
 	}
 }
 
@@ -66,4 +74,12 @@ func (a *AwsGamelift) CreateGameSession(rootScope *envelope.Scope, fleetAlias, s
 		Port:           int(*result.GameSession.Port),
 		Location:       *result.GameSession.Location,
 	}, nil
+}
+
+func (a *AwsGamelift) UpdateDSInformation(rootScope *envelope.Scope,
+	request *sessionClient.UpdateGamesessionDSInformationRequest, namespace, sessionID string) (int, error) {
+	scope := rootScope.NewChildScope("AwsGamelift.UpdateDSInformation")
+	defer scope.Finish()
+
+	return a.sessionClient.RequestAdminUpdateDSInformation(scope, request, namespace, sessionID)
 }
