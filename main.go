@@ -39,6 +39,7 @@ import (
 	prometheusCollectors "github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
 	"go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel"
@@ -69,7 +70,6 @@ func main() {
 		runtime.SetBlockProfileRate(1)
 		runtime.SetMutexProfileFraction(10)
 	}()
-
 	logrus.Infof("starting app server..")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -83,7 +83,7 @@ func main() {
 	logrusLogger.SetLevel(logrusLevel)
 
 	loggingOptions := []logging.Option{
-		logging.WithLogOnEvents(logging.PayloadSent),
+		logging.WithLogOnEvents(logging.StartCall, logging.FinishCall, logging.PayloadReceived, logging.PayloadSent),
 		logging.WithFieldsFromContext(func(ctx context.Context) logging.Fields {
 			if span := trace.SpanContextFromContext(ctx); span.IsSampled() {
 				return logging.Fields{"traceID", span.TraceID().String()}
@@ -109,26 +109,21 @@ func main() {
 	var tokenRepo repository.TokenRepository = sdkAuth.DefaultTokenRepositoryImpl()
 	var configRepo repository.ConfigRepository = sdkAuth.DefaultConfigRepositoryImpl()
 	var refreshRepo repository.RefreshTokenRepository = &sdkAuth.RefreshTokenImpl{AutoRefresh: true, RefreshRate: 0.01}
-	iamClient := &iam.OAuth20Service{
-		Client:                 factory.NewIamClient(configRepo),
-		ConfigRepository:       configRepo,
-		TokenRepository:        tokenRepo,
-		RefreshTokenRepository: refreshRepo,
-	}
-
-	iamClient.SetLocalValidation(true)
 
 	if strings.ToLower(common.GetEnv("PLUGIN_GRPC_SERVER_AUTH_ENABLED", "false")) == "true" {
+		common.OAuth = &iam.OAuth20Service{
+			Client:                 factory.NewIamClient(configRepo),
+			ConfigRepository:       configRepo,
+			TokenRepository:        tokenRepo,
+			RefreshTokenRepository: refreshRepo,
+		}
+
+		common.OAuth.SetLocalValidation(true)
+
 		unaryServerInterceptors = append(unaryServerInterceptors, common.UnaryAuthServerIntercept)
 		streamServerInterceptors = append(streamServerInterceptors, common.StreamAuthServerIntercept)
 		logrus.Infof("added auth interceptors")
 	}
-
-	// Create gRPC Server
-	grpcServer := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(unaryServerInterceptors...),
-		grpc.ChainStreamInterceptor(streamServerInterceptors...),
-	)
 
 	cfg := &config.Config{}
 
@@ -152,12 +147,16 @@ func main() {
 		return
 	}
 
-	grpcServer = grpc.NewServer()
-	sessionClient := sessionClient.New(iamClient, configRepo.GetJusticeBaseUrl(), 30*time.Second)
+	grpcServer := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+		grpc.ChainUnaryInterceptor(unaryServerInterceptors...),
+		grpc.ChainStreamInterceptor(streamServerInterceptors...),
+	)
+	sessionClient := sessionClient.New(common.OAuth, configRepo.GetJusticeBaseUrl(), 30*time.Second)
 	switch cfg.DsProvider {
 	case "GAMELIFT":
 		logrus.Infof("Session Dsms Grpc Plugin: %v", cfg.DsProvider)
-		clientGamelift := awsgamelift.New(nil, cfg.GameliftRegion, iamClient, sessionClient)
+		clientGamelift := awsgamelift.New(nil, cfg.GameliftRegion, common.OAuth, sessionClient)
 		dsmServiceGamelift := &serverGamelift.SessionDSM{
 			UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
 			ClientGamelift:                clientGamelift,
@@ -167,7 +166,7 @@ func main() {
 
 	case "GCP":
 		logrus.Infof("Session Dsms Grpc Plugin: %v", cfg.DsProvider)
-		clientGCPVM := gcpvm.New(cfg, sessionClient, iamClient)
+		clientGCPVM := gcpvm.New(cfg, sessionClient, common.OAuth)
 		dsmServiceGCP := &serverGCP.SessionDSM{
 			UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
 			ClientGCP:                     clientGCPVM,
@@ -180,7 +179,7 @@ func main() {
 
 		dsmServiceDemo := &serverDemo.SessionDSM{
 			SessionClient:                 sessionClient,
-			IamClient:                     iamClient,
+			IamClient:                     common.OAuth,
 			UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
 		}
 
@@ -191,7 +190,7 @@ func main() {
 	reflection.Register(grpcServer)
 	logrus.Infof("gRPC reflection enabled")
 
-	// Enable gRPC Health Check
+	// Enable gRPC health check
 	grpc_health_v1.RegisterHealthServer(grpcServer, health.NewServer())
 
 	// Register Prometheus Metrics
@@ -216,6 +215,7 @@ func main() {
 
 		return
 	}
+
 	otel.SetTracerProvider(tracerProvider)
 	defer func(ctx context.Context) {
 		if err := tracerProvider.Shutdown(ctx); err != nil {
