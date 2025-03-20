@@ -108,17 +108,18 @@ func main() {
 	// Preparing the IAM authorization
 	var tokenRepo repository.TokenRepository = sdkAuth.DefaultTokenRepositoryImpl()
 	var configRepo repository.ConfigRepository = sdkAuth.DefaultConfigRepositoryImpl()
-	var refreshRepo repository.RefreshTokenRepository = &sdkAuth.RefreshTokenImpl{AutoRefresh: true, RefreshRate: 0.01}
+	var refreshRepo repository.RefreshTokenRepository = &sdkAuth.RefreshTokenImpl{RefreshRate: 1.0, AutoRefresh: true}
+
+	oauthService := iam.OAuth20Service{
+		Client:                 factory.NewIamClient(configRepo),
+		TokenRepository:        tokenRepo,
+		RefreshTokenRepository: refreshRepo,
+		ConfigRepository:       configRepo,
+	}
 
 	if strings.ToLower(common.GetEnv("PLUGIN_GRPC_SERVER_AUTH_ENABLED", "false")) == "true" {
-		common.OAuth = &iam.OAuth20Service{
-			Client:                 factory.NewIamClient(configRepo),
-			ConfigRepository:       configRepo,
-			TokenRepository:        tokenRepo,
-			RefreshTokenRepository: refreshRepo,
-		}
-
-		common.OAuth.SetLocalValidation(true)
+		refreshInterval := common.GetEnvInt("REFRESH_INTERVAL", 600)
+		common.Validator = common.NewTokenValidator(oauthService, time.Duration(refreshInterval)*time.Second, true)
 
 		unaryServerInterceptors = append(unaryServerInterceptors, common.UnaryAuthServerIntercept)
 		streamServerInterceptors = append(streamServerInterceptors, common.StreamAuthServerIntercept)
@@ -152,11 +153,12 @@ func main() {
 		grpc.ChainUnaryInterceptor(unaryServerInterceptors...),
 		grpc.ChainStreamInterceptor(streamServerInterceptors...),
 	)
-	sessionClient := sessionClient.New(common.OAuth, configRepo.GetJusticeBaseUrl(), 30*time.Second)
+
+	sessionClient := sessionClient.New(&oauthService, configRepo.GetJusticeBaseUrl(), 30*time.Second)
 	switch cfg.DsProvider {
 	case "GAMELIFT":
 		logrus.Infof("Session Dsms Grpc Plugin: %v", cfg.DsProvider)
-		clientGamelift := awsgamelift.New(nil, cfg.GameliftRegion, common.OAuth, sessionClient)
+		clientGamelift := awsgamelift.New(nil, cfg.GameliftRegion, &oauthService, sessionClient)
 		dsmServiceGamelift := &serverGamelift.SessionDSM{
 			UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
 			ClientGamelift:                clientGamelift,
@@ -166,7 +168,7 @@ func main() {
 
 	case "GCP":
 		logrus.Infof("Session Dsms Grpc Plugin: %v", cfg.DsProvider)
-		clientGCPVM := gcpvm.New(cfg, sessionClient, common.OAuth)
+		clientGCPVM := gcpvm.New(cfg, sessionClient, &oauthService)
 		dsmServiceGCP := &serverGCP.SessionDSM{
 			UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
 			ClientGCP:                     clientGCPVM,
@@ -179,7 +181,7 @@ func main() {
 
 		dsmServiceDemo := &serverDemo.SessionDSM{
 			SessionClient:                 sessionClient,
-			IamClient:                     common.OAuth,
+			IamClient:                     &oauthService,
 			UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
 		}
 
