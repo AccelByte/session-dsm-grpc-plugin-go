@@ -9,3 +9,5 @@ pkg/pb/*.pb.go
 
 # Go build output
 session-dsm-grpc-plugin
+
+.DS_Store
