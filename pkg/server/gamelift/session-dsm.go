@@ -10,9 +10,11 @@ import (
 	"session-dsm-grpc-plugin/pkg/client/awsgamelift"
 	"session-dsm-grpc-plugin/pkg/constants"
 	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
-	"session-dsm-grpc-plugin/pkg/session"
 	"session-dsm-grpc-plugin/pkg/utils/envelope"
 	"time"
+
+	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclient/game_session"
+	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclientmodels"
 )
 
 type SessionDSM struct {
@@ -87,15 +89,24 @@ func (s *SessionDSM) CreateGameSessionAsync(ctx context.Context,
 		scopeNew := envelope.NewRootScope(context.Background(), "SendData", "")
 		defer scopeNew.Finish()
 		time.Sleep(2 * time.Second)
-		_, err := s.ClientGamelift.UpdateDSInformation(scopeNew,
-			&session.UpdateGamesessionDSInformationRequest{
-				Status:      session.DSStatusAvailable,
-				Port:        1223,
-				ServerID:    "123455",
-				IP:          "192.168.1.1",
-				Description: "testing",
-			}, data.Namespace, data.SessionId,
-		)
+
+		var port int32 = 1223
+		serverID := "123455"
+		ip := "192.168.1.1"
+		description := "testing"
+
+		err := s.ClientGamelift.UpdateDSInformation(scopeNew, &game_session.AdminUpdateDSInformationParams{
+			Namespace: data.Namespace,
+			SessionID: data.SessionId,
+			Context:   scopeNew.Ctx,
+			Body: &sessionclientmodels.ApimodelsUpdateGamesessionDSInformationRequest{
+				Status:      &constants.DSStatusAvailable,
+				Port:        &port,
+				ServerID:    &serverID,
+				IP:          &ip,
+				Description: &description,
+			},
+		})
 		if err != nil {
 			scopeNew.Log.Error(err)
 		}

@@ -8,12 +8,12 @@ import (
 	"errors"
 	"session-dsm-grpc-plugin/pkg/utils/envelope"
 
-	sessionClient "session-dsm-grpc-plugin/pkg/session"
-
 	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/iam"
+	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/session"
+	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclient/game_session"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
+	awsSession "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/gamelift"
 )
 
@@ -26,12 +26,12 @@ const (
 type AwsGamelift struct {
 	credential    *credentials.Credentials
 	region        string
-	sessionClient *sessionClient.SessionClient
+	sessionClient *session.GameSessionService
 	iamClient     *iam.OAuth20Service
 }
 
 func New(credential *credentials.Credentials, gameliftRegion string,
-	iamClient *iam.OAuth20Service, sessionClient *sessionClient.SessionClient) *AwsGamelift {
+	iamClient *iam.OAuth20Service, sessionClient *session.GameSessionService) *AwsGamelift {
 	return &AwsGamelift{
 		credential:    credential,
 		region:        gameliftRegion,
@@ -43,7 +43,7 @@ func New(credential *credentials.Credentials, gameliftRegion string,
 func (a *AwsGamelift) CreateGameSession(rootScope *envelope.Scope, fleetAlias, sessionID, sessionData, location string, maxPlayer int) (*GameSessionResult, error) {
 	scope := rootScope.NewChildScope("awsgamelift.CreateGameSession")
 	defer scope.Finish()
-	sess, err := session.NewSession(&aws.Config{
+	sess, err := awsSession.NewSession(&aws.Config{
 		Credentials: a.credential,
 		Region:      &a.region,
 	})
@@ -77,9 +77,9 @@ func (a *AwsGamelift) CreateGameSession(rootScope *envelope.Scope, fleetAlias, s
 }
 
 func (a *AwsGamelift) UpdateDSInformation(rootScope *envelope.Scope,
-	request *sessionClient.UpdateGamesessionDSInformationRequest, namespace, sessionID string) (int, error) {
+	request *game_session.AdminUpdateDSInformationParams) error {
 	scope := rootScope.NewChildScope("AwsGamelift.UpdateDSInformation")
 	defer scope.Finish()
 
-	return a.sessionClient.RequestAdminUpdateDSInformation(scope, request, namespace, sessionID)
+	return a.sessionClient.AdminUpdateDSInformationShort(request)
 }

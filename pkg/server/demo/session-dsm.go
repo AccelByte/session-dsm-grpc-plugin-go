@@ -10,18 +10,19 @@ import (
 	"session-dsm-grpc-plugin/pkg/client"
 	"session-dsm-grpc-plugin/pkg/constants"
 	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
-	"session-dsm-grpc-plugin/pkg/session"
-	sessionClient "session-dsm-grpc-plugin/pkg/session"
 	"session-dsm-grpc-plugin/pkg/utils/envelope"
 	"time"
 
 	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/iam"
+	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/session"
+	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclient/game_session"
+	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclientmodels"
 )
 
 type SessionDSM struct {
 	sessiondsm.UnimplementedSessionDsmServer
 	Demo          *client.Client
-	SessionClient *sessionClient.SessionClient
+	SessionClient *session.GameSessionService
 	IamClient     *iam.OAuth20Service
 }
 
@@ -75,27 +76,28 @@ func (s *SessionDSM) CreateGameSessionAsync(ctx context.Context,
 		scopeNew := envelope.NewRootScope(context.Background(), "SendData", "")
 		defer scopeNew.Finish()
 		time.Sleep(2 * time.Second)
-		_, err := s.UpdateDSInformation(scopeNew,
-			&session.UpdateGamesessionDSInformationRequest{
-				Status:      session.DSStatusAvailable,
-				Port:        1223,
-				ServerID:    "123455",
-				IP:          "192.168.1.1",
-				Description: "testing",
-			}, data.Namespace, data.SessionId,
-		)
+
+		var port int32 = 1223
+		serverID := "123455"
+		ip := "192.168.1.1"
+		description := "testing"
+
+		err := s.SessionClient.AdminUpdateDSInformationShort(&game_session.AdminUpdateDSInformationParams{
+			Namespace: data.Namespace,
+			SessionID: data.SessionId,
+			Context:   scopeNew.Ctx,
+			Body: &sessionclientmodels.ApimodelsUpdateGamesessionDSInformationRequest{
+				Status:      &constants.DSStatusAvailable,
+				Port:        &port,
+				ServerID:    &serverID,
+				IP:          &ip,
+				Description: &description,
+			},
+		})
 		if err != nil {
 			scopeNew.Log.Error(err)
 		}
 	}(req)
 
 	return responses, nil
-}
-
-func (s *SessionDSM) UpdateDSInformation(rootScope *envelope.Scope,
-	request *sessionClient.UpdateGamesessionDSInformationRequest, namespace, sessionID string) (int, error) {
-	scope := rootScope.NewChildScope("demo.UpdateDSInformation")
-	defer scope.Finish()
-
-	return s.SessionClient.RequestAdminUpdateDSInformation(scope, request, namespace, sessionID)
 }

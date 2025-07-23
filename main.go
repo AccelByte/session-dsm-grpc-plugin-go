@@ -27,11 +27,11 @@ import (
 	serverDemo "session-dsm-grpc-plugin/pkg/server/demo"
 	serverGamelift "session-dsm-grpc-plugin/pkg/server/gamelift"
 	serverGCP "session-dsm-grpc-plugin/pkg/server/gcpvm"
-	sessionClient "session-dsm-grpc-plugin/pkg/session"
 
 	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/factory"
 	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/repository"
 	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/iam"
+	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/session"
 	sdkAuth "github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/utils/auth"
 	"github.com/caarlos0/env"
 	promgrpc "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
@@ -118,6 +118,12 @@ func main() {
 		ConfigRepository:       configRepo,
 	}
 
+	gameSessionService := session.GameSessionService{
+		Client:           factory.NewSessionClient(configRepo),
+		TokenRepository:  tokenRepo,
+		ConfigRepository: configRepo,
+	}
+
 	if strings.ToLower(common.GetEnv("PLUGIN_GRPC_SERVER_AUTH_ENABLED", "true")) == "true" {
 		refreshInterval := common.GetEnvInt("REFRESH_INTERVAL", 600)
 		common.Validator = common.NewTokenValidator(oauthService, time.Duration(refreshInterval)*time.Second, true)
@@ -155,11 +161,10 @@ func main() {
 		grpc.ChainStreamInterceptor(streamServerInterceptors...),
 	)
 
-	sessionClient := sessionClient.New(&oauthService, configRepo.GetJusticeBaseUrl(), 30*time.Second)
 	switch cfg.DsProvider {
 	case "GAMELIFT":
 		logrus.Infof("Session Dsms Grpc Plugin: %v", cfg.DsProvider)
-		clientGamelift := awsgamelift.New(nil, cfg.GameliftRegion, &oauthService, sessionClient)
+		clientGamelift := awsgamelift.New(nil, cfg.GameliftRegion, &oauthService, &gameSessionService)
 		dsmServiceGamelift := &serverGamelift.SessionDSM{
 			UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
 			ClientGamelift:                clientGamelift,
@@ -169,7 +174,7 @@ func main() {
 
 	case "GCP":
 		logrus.Infof("Session Dsms Grpc Plugin: %v", cfg.DsProvider)
-		clientGCPVM := gcpvm.New(cfg, sessionClient, &oauthService)
+		clientGCPVM := gcpvm.New(cfg, &gameSessionService, &oauthService)
 		dsmServiceGCP := &serverGCP.SessionDSM{
 			UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
 			ClientGCP:                     clientGCPVM,
@@ -181,7 +186,7 @@ func main() {
 		logrus.Infof("Session Dsms Grpc Plugin: %v", cfg.DsProvider)
 
 		dsmServiceDemo := &serverDemo.SessionDSM{
-			SessionClient:                 sessionClient,
+			SessionClient:                 &gameSessionService,
 			IamClient:                     &oauthService,
 			UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
 		}

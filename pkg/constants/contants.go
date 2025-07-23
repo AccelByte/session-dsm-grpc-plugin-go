@@ -20,4 +20,7 @@ var (
 	ServerStatusFailed       = "FAILED"
 	GameServerSourceGamelift = "Gamelift"
 	GameServerSourceGCP      = "GCP"
+
+	DSStatusAvailable       = "AVAILABLE"
+	DSStatusFailedToRequest = "FAILED_TO_REQUEST"
 )

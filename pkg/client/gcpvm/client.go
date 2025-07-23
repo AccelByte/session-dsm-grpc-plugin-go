@@ -13,13 +13,13 @@ import (
 	"session-dsm-grpc-plugin/pkg/config"
 	"session-dsm-grpc-plugin/pkg/constants"
 	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
-	"session-dsm-grpc-plugin/pkg/session"
-	sessionClient "session-dsm-grpc-plugin/pkg/session"
 	"session-dsm-grpc-plugin/pkg/utils/envelope"
 	"strings"
 	"time"
 
 	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/iam"
+	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/session"
+	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclient/game_session"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
 )
@@ -75,11 +75,11 @@ var (
 type GCPVM struct {
 	credential    *compute.Service
 	config        *config.Config
-	sessionClient *sessionClient.SessionClient
+	sessionClient *session.GameSessionService
 	iamClient     *iam.OAuth20Service
 }
 
-func New(cfg *config.Config, sessionClient *sessionClient.SessionClient, iamClient *iam.OAuth20Service) *GCPVM {
+func New(cfg *config.Config, sessionClient *session.GameSessionService, iamClient *iam.OAuth20Service) *GCPVM {
 	ctx := context.Background()
 
 	client, err := compute.NewService(ctx, option.WithCredentialsFile("./service-account-key.json"))
@@ -268,11 +268,11 @@ func (g *GCPVM) TerminateGameSession(rootScope *envelope.Scope, sessionID, names
 }
 
 func (g *GCPVM) UpdateDSInformation(rootScope *envelope.Scope,
-	request *session.UpdateGamesessionDSInformationRequest, namespace, sessionID string) (int, error) {
+	request *game_session.AdminUpdateDSInformationParams) error {
 	scope := rootScope.NewChildScope("gcpvm.UpdateDSInformation")
 	defer scope.Finish()
 
-	return g.sessionClient.RequestAdminUpdateDSInformation(scope, request, namespace, sessionID)
+	return g.sessionClient.AdminUpdateDSInformationShort(request)
 }
 
 func createContainerDeclaration(instanceName, repository, deploymentImage string) *string {
