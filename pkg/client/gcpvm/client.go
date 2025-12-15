@@ -180,14 +180,14 @@ func (g *GCPVM) CreateGameSession(rootScope *envelope.Scope, fleetAlias, session
 
 	_, err = g.credential.Instances.Insert(g.config.GCPProjectID, zone, instance).Context(scope.Ctx).Do()
 	if err != nil {
-		scope.Log.Errorf("Failed to create VM instance: %v", err)
+		scope.Log.Error("Failed to create VM instance", "error", err)
 		return nil, err
 	}
 
 	// Call the Compute Engine API to get the instance details.
 	instance, err = g.credential.Instances.Get(g.config.GCPProjectID, zone, instanceName).Context(scope.Ctx).Do()
 	if err != nil {
-		scope.Log.Errorf("Failed to get instance details: %v", err)
+		scope.Log.Error("Failed to get instance details", "error", err)
 		return nil, err
 	}
 
@@ -195,7 +195,7 @@ func (g *GCPVM) CreateGameSession(rootScope *envelope.Scope, fleetAlias, session
 		for i := 0; i < g.config.GCPRetry; i++ {
 			instance, err = g.credential.Instances.Get(g.config.GCPProjectID, zone, instanceName).Context(scope.Ctx).Do()
 			if err != nil {
-				scope.Log.Errorf("Failed to get instance details: %v", err)
+				scope.Log.Error("Failed to get instance details", "error", err)
 				return nil, err
 			}
 
@@ -219,10 +219,10 @@ func (g *GCPVM) CreateGameSession(rootScope *envelope.Scope, fleetAlias, session
 	if externalIP == "" {
 		_, err := g.TerminateGameSession(rootScope, sessionID, namespace, zone)
 		if err != nil {
-			scope.Log.Errorf("Failed to remove vm %s", instanceName)
+			scope.Log.Error("Failed to remove vm", "instance", instanceName, "error", err)
 		}
 
-		scope.Log.Errorf("Failed to find external IP address for instance %s", instanceName)
+		scope.Log.Error("Failed to find external IP address for instance", "instance", instanceName)
 		return nil, errors.New("failed to find external ip address")
 	}
 

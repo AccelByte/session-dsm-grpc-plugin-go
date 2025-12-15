@@ -95,7 +95,7 @@ func (s *SessionDSM) CreateGameSessionAsync(ctx context.Context,
 			},
 		})
 		if err != nil {
-			scopeNew.Log.Error(err)
+			scopeNew.Log.Error("Failed to update DS information", "error", err)
 		}
 	}(req)
 
