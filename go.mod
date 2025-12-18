@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.10
 
 require (
-	github.com/AccelByte/accelbyte-go-sdk v0.80.0
+	github.com/AccelByte/accelbyte-go-sdk v0.85.0
 	github.com/AccelByte/go-restful-plugins/v3 v3.2.2
 	github.com/aws/aws-sdk-go v1.49.1
 	github.com/caarlos0/env v3.5.0+incompatible
