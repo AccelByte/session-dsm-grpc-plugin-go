@@ -20,11 +20,13 @@ import (
 	"syscall"
 	"time"
 
+	"session-dsm-grpc-plugin/pkg/client/ams"
 	"session-dsm-grpc-plugin/pkg/client/awsgamelift"
 	"session-dsm-grpc-plugin/pkg/client/gcpvm"
 	"session-dsm-grpc-plugin/pkg/common"
 	"session-dsm-grpc-plugin/pkg/config"
 	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
+	serverAMS "session-dsm-grpc-plugin/pkg/server/ams"
 	serverDemo "session-dsm-grpc-plugin/pkg/server/demo"
 	serverGamelift "session-dsm-grpc-plugin/pkg/server/gamelift"
 	serverGCP "session-dsm-grpc-plugin/pkg/server/gcpvm"
@@ -219,9 +221,9 @@ func main() {
 		grpc.ChainStreamInterceptor(streamServerInterceptors...),
 	)
 
+	logger.Info("Session Dsms Grpc Plugin", "provider", cfg.DsProvider)
 	switch cfg.DsProvider {
 	case "GAMELIFT":
-		logger.Info("Session Dsms Grpc Plugin", "provider", cfg.DsProvider)
 		clientGamelift := awsgamelift.New(nil, cfg.GameliftRegion, &oauthService, &gameSessionService)
 		dsmServiceGamelift := &serverGamelift.SessionDSM{
 			UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
@@ -231,7 +233,6 @@ func main() {
 		sessiondsm.RegisterSessionDsmServer(grpcServer, dsmServiceGamelift)
 
 	case "GCP":
-		logger.Info("Session Dsms Grpc Plugin", "provider", cfg.DsProvider)
 		clientGCPVM := gcpvm.New(cfg, &gameSessionService, &oauthService)
 		dsmServiceGCP := &serverGCP.SessionDSM{
 			UnimplementedSessionDsmServer: sessiondsm.UnimplementedSessionDsmServer{},
@@ -240,8 +241,22 @@ func main() {
 
 		sessiondsm.RegisterSessionDsmServer(grpcServer, dsmServiceGCP)
 
+	case "AMS":
+		amsClient := ams.New(
+			cfg.ABBaseURL,
+			func() string {
+				token, _ := oauthService.GetToken()
+				return token
+			},
+			30*time.Second,
+		)
+		amsServer := &serverAMS.SessionDSM{
+			AMSClient:     amsClient,
+			SessionClient: &gameSessionService,
+		}
+		sessiondsm.RegisterSessionDsmServer(grpcServer, amsServer)
+
 	default:
-		logger.Info("Session Dsms Grpc Plugin", "provider", cfg.DsProvider)
 
 		dsmServiceDemo := &serverDemo.SessionDSM{
 			SessionClient:                 &gameSessionService,

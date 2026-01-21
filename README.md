@@ -131,7 +131,7 @@ To be able to run this app, you will need to follow these setup steps.
    AB_CLIENT_ID='xxxxxxxxxx'                                   # Client ID from the Prerequisites section
    AB_CLIENT_SECRET='xxxxxxxxxx'                               # Client Secret from the Prerequisites section
    PLUGIN_GRPC_SERVER_AUTH_ENABLED=false                       # Enable or disable access token and permission verification
-   DS_PROVIDER='DEMO'                                          # Select DS implementation, DEMO, GAMELIFT, or GCP
+   DS_PROVIDER='DEMO'                                          # Select DS implementation, DEMO, GAMELIFT, AMS or GCP
    
    // AWS Gamelift Config
    AWS_ACCESS_KEY_ID='xxxxxxx'                                 # AWS access key if using gamelift

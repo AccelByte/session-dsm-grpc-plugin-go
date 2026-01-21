@@ -237,3 +237,8 @@ session-dsm-grpc-plugin
 
 .env*
 !.env.template
+
+
+# Local
+.idea/
+vendor/
