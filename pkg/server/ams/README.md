@@ -245,6 +245,6 @@ See `client_test.go` for unit tests covering:
 
 ## References
 
-- [Session Service AMS Integration](/Users/desnia/go/justice-session-service/pkg/ams/client.go)
-- [Session DSM Proto Definition](/Users/desnia/go/github/session-dsm-grpc-plugin-go/pkg/proto/session-dsm.proto)
+- [Session Service AMS Integration](https://docs.accelbyte.io/gaming-services/tutorials/byte-wars/unity/learning-modules/play/module-session-ds-ams/unity-module-ds-ams-overview/)
+- [Session DSM Proto Definition](https://github.com/AccelByte/session-dsm-grpc-plugin-go/blob/main/pkg/proto/session-dsm.proto)
 - [AMS Documentation](https://docs.accelbyte.io/gaming-services/services/play/ams/)

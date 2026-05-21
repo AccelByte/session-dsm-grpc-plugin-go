@@ -170,14 +170,12 @@ func main() {
 		TokenRepository:        tokenRepo,
 		RefreshTokenRepository: refreshRepo,
 		ConfigRepository:       configRepo,
-
 	}
 
 	gameSessionService := session.GameSessionService{
 		Client:           factory.NewSessionClient(configRepo),
 		TokenRepository:  tokenRepo,
 		ConfigRepository: configRepo,
-
 	}
 
 	if strings.ToLower(common.GetEnv("PLUGIN_GRPC_SERVER_AUTH_ENABLED", "true")) == "true" {
@@ -245,10 +243,14 @@ func main() {
 		amsClient := ams.New(
 			cfg.ABBaseURL,
 			func() string {
-				token, _ := oauthService.GetToken()
+				token, errGetToken := oauthService.GetToken()
+				if errGetToken != nil {
+					logger.Error("failed to retrieve IAM token for AMS", "error", errGetToken)
+					return ""
+				}
 				return token
 			},
-			30*time.Second,
+			cfg.AMSReqTimeout,
 		)
 		amsServer := &serverAMS.SessionDSM{
 			AMSClient:     amsClient,

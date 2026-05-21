@@ -12,9 +12,9 @@ import (
 	"session-dsm-grpc-plugin/pkg/utils/envelope"
 	"strings"
 
-	"github.com/AccelByte/accelbyte-go-sdk/services-api/pkg/service/session"
 	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclient/game_session"
 	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclientmodels"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -23,10 +23,20 @@ const (
 	AMSSource         = "AMS"
 )
 
+// AMSClientInterface defines the interface for AMS client operations.
+type AMSClientInterface interface {
+	ClaimDS(scope *envelope.Scope, params ams.DsClaimParameters) (ams.GameServer, error)
+}
+
+// SessionClientInterface defines the interface for session client operations.
+type SessionClientInterface interface {
+	AdminUpdateDSInformationShort(input *game_session.AdminUpdateDSInformationParams) error
+}
+
 type SessionDSM struct {
 	sessiondsm.UnimplementedSessionDsmServer
-	AMSClient     *ams.Client
-	SessionClient *session.GameSessionService
+	AMSClient     AMSClientInterface
+	SessionClient SessionClientInterface
 }
 
 // CreateGameSession implements synchronous game session creation using AMS
@@ -51,6 +61,7 @@ func (s *SessionDSM) CreateGameSession(ctx context.Context, req *sessiondsm.Requ
 
 	// Validate parameters
 	if err := claimParams.Validate(); err != nil {
+		scope.TraceError(err)
 		scope.Log.Error("Invalid claim parameters", "error", err)
 		return nil, fmt.Errorf("invalid claim parameters: %w", err)
 	}
@@ -58,6 +69,7 @@ func (s *SessionDSM) CreateGameSession(ctx context.Context, req *sessiondsm.Requ
 	// Claim DS from AMS
 	gameServer, err := s.AMSClient.ClaimDS(scope, claimParams)
 	if err != nil {
+		scope.TraceError(err)
 		scope.Log.Error("Failed to claim DS from AMS", "error", err)
 		return nil, fmt.Errorf("failed to claim DS from AMS: %w", err)
 	}
@@ -134,9 +146,14 @@ func (s *SessionDSM) CreateGameSessionAsync(ctx context.Context, req *sessiondsm
 		Message: "Game session creation initiated",
 	}
 
+	// Capture the trace context from the request span before launching the goroutine.
+	// ContextWithRemoteSpanContext propagates the parent trace link without inheriting
+	// the gRPC request context's cancellation, so the async work can outlive the RPC.
+	parentCtx := oteltrace.ContextWithRemoteSpanContext(context.Background(), oteltrace.SpanContextFromContext(scope.Ctx))
+
 	// Process DS claim asynchronously
 	go func(requestData *sessiondsm.RequestCreateGameSession) {
-		asyncScope := envelope.NewRootScope(context.Background(), "CreateGameSessionAsync.Worker", "")
+		asyncScope := envelope.NewRootScope(parentCtx, "CreateGameSessionAsync.Worker", "")
 		defer asyncScope.Finish()
 
 		asyncScope.Log.Info("Starting async DS claim", "sessionID", requestData.SessionId)
@@ -144,13 +161,14 @@ func (s *SessionDSM) CreateGameSessionAsync(ctx context.Context, req *sessiondsm
 		// Prepare claim parameters
 		claimParams := ams.DsClaimParameters{
 			SessionID: requestData.SessionId,
-			Namespace: getGameNamespace(req.Namespace),
+			Namespace: getGameNamespace(requestData.Namespace),
 			ClaimKeys: strings.Split(requestData.Deployment, ","),
 			Regions:   requestData.RequestedRegion,
 		}
 
 		// Validate parameters
 		if err := claimParams.Validate(); err != nil {
+			asyncScope.TraceError(err)
 			asyncScope.Log.Error("Invalid claim parameters", "error", err)
 			s.updateDSInformationWithError(asyncScope, requestData.Namespace, requestData.SessionId,
 				fmt.Sprintf("Invalid claim parameters: %v", err))
@@ -160,6 +178,7 @@ func (s *SessionDSM) CreateGameSessionAsync(ctx context.Context, req *sessiondsm
 		// Claim DS from AMS
 		gameServer, err := s.AMSClient.ClaimDS(asyncScope, claimParams)
 		if err != nil {
+			asyncScope.TraceError(err)
 			asyncScope.Log.Error("Failed to claim DS from AMS", "error", err)
 			s.updateDSInformationWithError(asyncScope, requestData.Namespace, requestData.SessionId,
 				fmt.Sprintf("Failed to claim DS: %v", err))

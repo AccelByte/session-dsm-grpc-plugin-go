@@ -7,6 +7,7 @@ package config
 import (
 	"fmt"
 	"reflect"
+	"time"
 )
 
 // Config specifies configurable options through env vars
@@ -31,7 +32,8 @@ type Config struct {
 	ABClientId     string `env:"AB_CLIENT_ID" envDocs:"Client ID from the Prerequisites section" envDefault:""`
 	ABClientSecret string `env:"AB_CLIENT_SECRET" envDocs:"Client Secret from the Prerequisites section" envDefault:""`
 	// Switching ds provider
-	DsProvider string `env:"DS_PROVIDER" envDocs:"Ds Provider to choose (DEMO, GAMELIFT, GCP, AMS)" envDefault:"DEMO"`
+	DsProvider    string        `env:"DS_PROVIDER" envDocs:"Ds Provider to choose (DEMO, GAMELIFT, GCP, AMS)" envDefault:"DEMO"`
+	AMSReqTimeout time.Duration `env:"AMS_REQUEST_TIMEOUT" envDocs:"AMS request timeout in seconds" envDefault:"30s"`
 }
 
 // HelpDocs returns documentation of Config based on field tags.

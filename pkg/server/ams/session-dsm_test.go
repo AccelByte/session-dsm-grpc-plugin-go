@@ -7,20 +7,40 @@ package server
 import (
 	"context"
 	"errors"
-	"session-dsm-grpc-plugin/pkg/client/ams"
-	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/AccelByte/accelbyte-go-sdk/session-sdk/pkg/sessionclient/game_session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"session-dsm-grpc-plugin/pkg/client/ams"
+	sessiondsm "session-dsm-grpc-plugin/pkg/pb"
+	"session-dsm-grpc-plugin/pkg/utils/envelope"
 )
+
+// waitWithTimeout waits for wg to reach zero or fails the test after the given timeout.
+// This prevents a hung goroutine from blocking the entire test suite indefinitely.
+func waitWithTimeout(t *testing.T, wg *sync.WaitGroup, timeout time.Duration) {
+	t.Helper()
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(timeout):
+		t.Fatal("timed out waiting for async worker to complete")
+	}
+}
 
 // MockAMSClient is a mock implementation of the AMS client
 type MockAMSClient struct {
 	mock.Mock
 }
 
-func (m *MockAMSClient) ClaimDS(scope interface{}, params ams.DsClaimParameters) (ams.GameServer, error) {
+func (m *MockAMSClient) ClaimDS(scope *envelope.Scope, params ams.DsClaimParameters) (ams.GameServer, error) {
 	args := m.Called(scope, params)
 	return args.Get(0).(ams.GameServer), args.Error(1)
 }
@@ -30,7 +50,7 @@ type MockSessionClient struct {
 	mock.Mock
 }
 
-func (m *MockSessionClient) AdminUpdateDSInformationShort(params interface{}) error {
+func (m *MockSessionClient) AdminUpdateDSInformationShort(params *game_session.AdminUpdateDSInformationParams) error {
 	args := m.Called(params)
 	return args.Error(0)
 }
@@ -189,18 +209,37 @@ func TestSessionDSM_TerminateGameSession_Success(t *testing.T) {
 }
 
 func TestSessionDSM_CreateGameSessionAsync_Success(t *testing.T) {
-	// Create mock AMS client
 	mockAMSClient := new(MockAMSClient)
+	mockSessionClient := new(MockSessionClient)
 
-	// Note: We won't verify the actual async call in this test
-	// as it runs in a goroutine. We just verify the immediate response.
-
-	// Create server
-	server := &SessionDSM{
-		AMSClient: mockAMSClient,
+	expectedGameServer := ams.GameServer{
+		SessionID:  "session-async-123",
+		Namespace:  "mygame",
+		PodName:    "server-async-abc",
+		IP:         "10.0.1.1",
+		Port:       7777,
+		Region:     "us-west-2",
+		Deployment: "production-fleet",
+		StatusText: "claimed",
 	}
 
-	// Create request
+	mockAMSClient.On("ClaimDS", mock.Anything, mock.MatchedBy(func(params ams.DsClaimParameters) bool {
+		return params.SessionID == "session-async-123" && params.Namespace == "mygame"
+	})).Return(expectedGameServer, nil)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	mockSessionClient.On("AdminUpdateDSInformationShort", mock.MatchedBy(func(params *game_session.AdminUpdateDSInformationParams) bool {
+		return params.SessionID == "session-async-123" && params.Namespace == "mygame"
+	})).Return(nil).Run(func(_ mock.Arguments) {
+		wg.Done()
+	})
+
+	server := &SessionDSM{
+		AMSClient:     mockAMSClient,
+		SessionClient: mockSessionClient,
+	}
+
 	req := &sessiondsm.RequestCreateGameSession{
 		SessionId:       "session-async-123",
 		Namespace:       "mygame",
@@ -212,7 +251,6 @@ func TestSessionDSM_CreateGameSessionAsync_Success(t *testing.T) {
 		GameMode:        "deathmatch",
 	}
 
-	// Execute
 	response, err := server.CreateGameSessionAsync(context.Background(), req)
 
 	// Verify immediate response
@@ -221,8 +259,52 @@ func TestSessionDSM_CreateGameSessionAsync_Success(t *testing.T) {
 	assert.True(t, response.Success)
 	assert.Equal(t, "Game session creation initiated", response.Message)
 
-	// Note: The goroutine will execute asynchronously, so we can't verify
-	// the ClaimDS call here without complex synchronization
+	// Wait for the async worker to call AdminUpdateDSInformationShort
+	waitWithTimeout(t, &wg, 5*time.Second)
+
+	mockAMSClient.AssertExpectations(t)
+	mockSessionClient.AssertExpectations(t)
+}
+
+func TestSessionDSM_CreateGameSessionAsync_ClaimFailure(t *testing.T) {
+	mockAMSClient := new(MockAMSClient)
+	mockSessionClient := new(MockSessionClient)
+
+	mockAMSClient.On("ClaimDS", mock.Anything, mock.Anything).
+		Return(ams.GameServer{}, errors.New("no matching DS available"))
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	mockSessionClient.On("AdminUpdateDSInformationShort", mock.MatchedBy(func(params *game_session.AdminUpdateDSInformationParams) bool {
+		return params.SessionID == "session-async-fail" && params.Namespace == "mygame"
+	})).Return(nil).Run(func(_ mock.Arguments) {
+		wg.Done()
+	})
+
+	server := &SessionDSM{
+		AMSClient:     mockAMSClient,
+		SessionClient: mockSessionClient,
+	}
+
+	req := &sessiondsm.RequestCreateGameSession{
+		SessionId:       "session-async-fail",
+		Namespace:       "mygame",
+		Deployment:      "production-fleet",
+		RequestedRegion: []string{"us-west-2"},
+	}
+
+	response, err := server.CreateGameSessionAsync(context.Background(), req)
+
+	// Immediate response is always success (async)
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.True(t, response.Success)
+
+	// Wait for the async worker to call AdminUpdateDSInformationShort with error status
+	waitWithTimeout(t, &wg, 5*time.Second)
+
+	mockAMSClient.AssertExpectations(t)
+	mockSessionClient.AssertExpectations(t)
 }
 
 func TestSessionDSM_CreateGameSession_MultipleRegions(t *testing.T) {

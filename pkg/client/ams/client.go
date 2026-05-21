@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	maxBackoffCount = uint64(5)
+	maxBackoffCount = 5
 )
 
 // Client represents an AMS client for claiming dedicated servers
@@ -34,7 +34,7 @@ type Client struct {
 func New(baseURL string, getTokenFunc func() string, requestTimeout time.Duration) *Client {
 	return &Client{
 		baseURL:        baseURL,
-		httpClient:     &http.Client{Timeout: requestTimeout},
+		httpClient:     &http.Client{},
 		getTokenFunc:   getTokenFunc,
 		requestTimeout: requestTimeout,
 	}
@@ -104,29 +104,18 @@ func (c *Client) ClaimDS(scope *envelope.Scope, parameters DsClaimParameters) (G
 	scope.Log.Info("Claiming DS from AMS",
 		"namespace", parameters.Namespace,
 		"sessionID", parameters.SessionID,
+	)
+	scope.Log.Debug("AMS ClaimDS request details",
+		"baseURL", c.baseURL,
 		"regions", parameters.Regions,
 		"claimKeys", parameters.ClaimKeys,
 	)
-
-	// Validate parameters
-	if err := parameters.Validate(); err != nil {
-		return GameServer{}, err
-	}
 
 	request := claimByKeysReq{
 		ClaimKeys: parameters.ClaimKeys,
 		Regions:   parameters.Regions,
 		SessionID: parameters.SessionID,
 	}
-
-	scope.Log.Info("AMS ClaimDS request details",
-		"baseURL", c.baseURL,
-		"namespace", parameters.Namespace,
-		"sessionID", parameters.SessionID,
-		"claimKeys", parameters.ClaimKeys,
-		"regions", parameters.Regions,
-		"requestBody", request,
-	)
 
 	var (
 		body []byte
@@ -137,17 +126,15 @@ func (c *Client) ClaimDS(scope *envelope.Scope, parameters DsClaimParameters) (G
 	// Retry logic for claiming DS
 	err = backoff.RetryNotify(func() error {
 		url := fmt.Sprintf("%s/ams/v1/namespaces/%s/servers/claim", c.baseURL, parameters.Namespace)
-		scope.Log.Info("AMS ClaimDS sending PUT request", "url", url)
+		scope.Log.Debug("AMS ClaimDS sending PUT request", "url", url)
 		resp, body, err = c.put(scope, url, request)
 		if err != nil {
 			scope.Log.Error("Failed to make claim request", "error", err)
 			return backoff.Permanent(fmt.Errorf("unable to make request to claim DS: %w", err))
 		}
 
-		scope.Log.Info("AMS ClaimDS response received",
-			"statusCode", resp.StatusCode,
-			"responseBody", string(body),
-		)
+		scope.Log.Info("AMS ClaimDS response received", "statusCode", resp.StatusCode)
+		scope.Log.Debug("AMS ClaimDS response body", "responseBody", string(body))
 
 		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
 			errMsg := fmt.Sprintf("client error claiming DS (status %d)", resp.StatusCode)
@@ -165,7 +152,7 @@ func (c *Client) ClaimDS(scope *envelope.Scope, parameters DsClaimParameters) (G
 			errMsg := fmt.Sprintf("server error claiming DS (status %d)", resp.StatusCode)
 			errMsg += parseErrorResponse(body)
 			scope.Log.Error(errMsg, "statusCode", resp.StatusCode)
-			return backoff.Permanent(errors.New(errMsg))
+			return errors.New(errMsg)
 		}
 
 		return nil
@@ -179,14 +166,15 @@ func (c *Client) ClaimDS(scope *envelope.Scope, parameters DsClaimParameters) (G
 	}
 
 	// Parse response
-	scope.Log.Info("AMS ClaimDS claim successful, parsing response", "rawBody", string(body))
+	scope.Log.Info("AMS ClaimDS claim successful, parsing response")
+	scope.Log.Debug("AMS ClaimDS response body", "rawBody", string(body))
 	var result claimResponse
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		return GameServer{}, fmt.Errorf("unable to unmarshal claim response: %w", err)
 	}
 
-	scope.Log.Info("AMS ClaimDS parsed response",
+	scope.Log.Debug("AMS ClaimDS parsed response",
 		"serverID", result.ServerID,
 		"ip", result.IP,
 		"ports", result.Ports,
@@ -199,7 +187,6 @@ func (c *Client) ClaimDS(scope *envelope.Scope, parameters DsClaimParameters) (G
 	if port, ok := result.Ports["default"]; ok {
 		defaultPort = port
 	}
-	scope.Log.Info("AMS ClaimDS resolved default port", "defaultPort", defaultPort, "allPorts", result.Ports)
 
 	// Build GameServer response
 	gameServer := GameServer{
@@ -234,7 +221,7 @@ func (c *Client) put(scope *envelope.Scope, url string, requestBody any) (*http.
 	if len(token) > 10 {
 		tokenPreview = token[:10] + "..."
 	}
-	scope.Log.Info("AMS PUT request preparing",
+	scope.Log.Debug("AMS PUT request preparing",
 		"url", url,
 		"tokenPreview", tokenPreview,
 		"timeout", c.requestTimeout,
@@ -248,7 +235,7 @@ func (c *Client) put(scope *envelope.Scope, url string, requestBody any) (*http.
 		return nil, nil, err
 	}
 
-	scope.Log.Info("AMS PUT request body", "body", string(b))
+	scope.Log.Debug("AMS PUT request body", "body", string(b))
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(b))
 	if err != nil {
@@ -259,17 +246,14 @@ func (c *Client) put(scope *envelope.Scope, url string, requestBody any) (*http.
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
-	if resp != nil && resp.Body != nil {
-		defer func(Body io.ReadCloser) {
-			if err = Body.Close(); err != nil {
-				scope.Log.Error("unable to close body: ", err.Error())
-			}
-		}(resp.Body)
-	}
-
 	if err != nil {
 		return nil, nil, err
 	}
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			scope.Log.Error("unable to close body", "error", closeErr)
+		}
+	}()
 
 	resBodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {

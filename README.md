@@ -126,29 +126,30 @@ To be able to run this app, you will need to follow these setup steps.
 
 2. Fill in the required environment variables in `.env` file as shown below.
 
-   ```
-   AB_BASE_URL=https://prod.gamingservices.accelbyte.io        # Base URL of AccelByte Gaming Services prod environment
-   AB_CLIENT_ID='xxxxxxxxxx'                                   # Client ID from the Prerequisites section
-   AB_CLIENT_SECRET='xxxxxxxxxx'                               # Client Secret from the Prerequisites section
-   PLUGIN_GRPC_SERVER_AUTH_ENABLED=false                       # Enable or disable access token and permission verification
-   DS_PROVIDER='DEMO'                                          # Select DS implementation, DEMO, GAMELIFT, AMS or GCP
+      ```
+      AB_BASE_URL=https://prod.gamingservices.accelbyte.io        # Base URL of AccelByte Gaming Services prod environment
+      AB_CLIENT_ID='xxxxxxxxxx'                                   # Client ID from the Prerequisites section
+      AB_CLIENT_SECRET='xxxxxxxxxx'                               # Client Secret from the Prerequisites section
+      PLUGIN_GRPC_SERVER_AUTH_ENABLED=false                       # Enable or disable access token and permission verification
+      DS_PROVIDER='DEMO'                                          # Select DS implementation, DEMO, GAMELIFT, AMS or GCP
+      AMS_REQUEST_TIMEOUT=30s                                     # AMS request timeout (seconds)
    
-   // AWS Gamelift Config
-   AWS_ACCESS_KEY_ID='xxxxxxx'                                 # AWS access key if using gamelift
-   AWS_SECRET_ACCESS_KEY='xxxxxx'                              # AWS secret key if using gamelift
-   AWS_REGION='us-west-2'                                      # AWS region for gamelift
-   GAMELIFT_REGION='us-west-2'                                 # alias of AWS_REGION
+      // AWS Gamelift Config
+      AWS_ACCESS_KEY_ID='xxxxxxx'                                 # AWS access key if using gamelift
+      AWS_SECRET_ACCESS_KEY='xxxxxx'                              # AWS secret key if using gamelift
+      AWS_REGION='us-west-2'                                      # AWS region for gamelift
+      GAMELIFT_REGION='us-west-2'                                 # alias of AWS_REGION
       
-   // GCP Config
-   GCP_SERVICE_ACCOUNT_FILE='./account.json'                   # GCP service account file in json format
-   GCP_PROJECT_ID=xxxxx-xxxx                                   # GCP Project ID
-   GCP_NETWORK=public                                          # GCP Network type
-   GCP_MACHINE_TYPE=e2-micro                                   # GCP intance type
-   GCP_REPOSITORY=asia-southeast1-docker.pkg.dev/xxxx/gcpvm    # GCP Repository
-   GCP_RETRY=3                                                 # GCP Retry to get instance
-   GCP_WAIT_GET_IP=1                                           # GCP wait time to get the instance IP in seconds
-   GCP_IMAGE_OPEN_PORT=8080                                    # Dedicated server open port
-   ```
+      // GCP Config
+      GCP_SERVICE_ACCOUNT_FILE='./account.json'                   # GCP service account file in json format
+      GCP_PROJECT_ID=xxxxx-xxxx                                   # GCP Project ID
+      GCP_NETWORK=public                                          # GCP Network type
+      GCP_MACHINE_TYPE=e2-micro                                   # GCP intance type
+      GCP_REPOSITORY=asia-southeast1-docker.pkg.dev/xxxx/gcpvm    # GCP Repository
+      GCP_RETRY=3                                                 # GCP Retry to get instance
+      GCP_WAIT_GET_IP=1                                           # GCP wait time to get the instance IP in seconds
+      GCP_IMAGE_OPEN_PORT=8080                                    # Dedicated server open port
+      ```
 
 3. Access to AccelByte Gaming Services environment.
 
