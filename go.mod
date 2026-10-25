@@ -2,7 +2,7 @@ module session-dsm-grpc-plugin
 
 go 1.26.0
 
-toolchain go1.26.9
+toolchain go1.26.10
 
 require (
 	github.com/AccelByte/accelbyte-go-sdk v0.85.0
@@ -21,7 +21,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.45.0
 	go.opentelemetry.io/otel/trace v1.45.0
 	google.golang.org/api v0.264.0
-	google.golang.org/grpc v1.83.1
+	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.11
 )
 
