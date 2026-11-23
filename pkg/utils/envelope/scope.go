@@ -10,8 +10,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/AccelByte/go-restful-plugins/v3/pkg/trace"
-
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -66,10 +64,6 @@ func NewRootScope(rootCtx context.Context, name string, abTraceID string) *Scope
 			gitHashField, constants.GIT_HASH,
 			roleSeedingVersionField, constants.ROLE_SEEDING_VERSION,
 		),
-	}
-
-	if abTraceID != "" {
-		scope.TraceTag(trace.TraceIDKey, abTraceID)
 	}
 
 	return scope

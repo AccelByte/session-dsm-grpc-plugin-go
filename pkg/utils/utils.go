@@ -5,7 +5,6 @@
 package utils
 
 import (
-	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
@@ -16,10 +15,10 @@ func MakeTraceID(identifiers ...string) string {
 	strInt := strconv.Itoa(generateRandomInt())
 	var tID string
 	for _, i := range identifiers {
-		tID = fmt.Sprintf(tID + i + "_")
+		tID += i + "_"
 	}
 
-	return fmt.Sprintf(tID + strInt)
+	return tID + strInt
 }
 
 //nolint:gosec
